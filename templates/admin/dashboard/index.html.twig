@@ -1,0 +1,79 @@
+{# templates/admin/dashboard/index.html.twig #}
+{% extends 'base_admin.html.twig' %}
+{% block title %}Dashboard - Jelo's Café{% endblock %}
+{% block header %}Dashboard Overview{% endblock %}
+
+{% block body %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-compact p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">Total Sales</small>
+                    <div class="h4 mb-0 text-success">₱{{ totalSales|number_format(2, '.', ',') }}</div>
+                </div>
+                <div class="text-muted" style="font-size:1.6rem">💵</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-compact p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">Total Orders</small>
+                    <div class="h4 mb-0 text-primary">{{ totalOrders }}</div>
+                </div>
+                <div style="font-size:1.6rem">📦</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-compact p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">Total Products</small>
+                    <div class="h4 mb-0 text-warning">{{ totalProducts }}</div>
+                </div>
+                <div style="font-size:1.6rem">☕</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-compact p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">Donation (10%)</small>
+                    <div class="h4 mb-0 text-danger">₱{{ totalDonation|number_format(2, '.', ',') }}</div>
+                </div>
+                <div style="font-size:1.6rem">❤️</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm p-3">
+            <h5 class="mb-3">Recent Orders</h5>
+            {% include 'admin/orders/_recent_table.html.twig' with { orders: orders|slice(0,8) } %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm p-3">
+            <h5 class="mb-3">Quick Actions</h5>
+            <div class="d-grid gap-2">
+                <a href="{{ path('admin_product_new') }}" class="btn" style="background:var(--coffee); color:#fff">➕ Add Product</a>
+                <a href="{{ path('admin_product_index') }}" class="btn btn-outline-secondary">Manage Products</a>
+                <a href="{{ path('admin_order_index') }}" class="btn btn-outline-secondary">Manage Orders</a>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin_reports') }}" class="btn btn-outline-secondary">View Reports</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

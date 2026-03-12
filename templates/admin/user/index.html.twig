@@ -1,0 +1,98 @@
+{# templates/admin/user/index.html.twig #}
+{% extends 'base_admin.html.twig' %}
+{% block title %}Users - Admin{% endblock %}
+{% block header %}User Management{% endblock %}
+{% block subheader %}List of all registered users{% endblock %}
+
+{% block body %}
+<div class="card card-compact p-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4 class="fw-bold">Users</h4>
+        <a href="{{ path('admin_user_create') }}" class="btn btn-dark">
+            <i class="bi bi-plus-circle"></i> Add User
+        </a>
+    </div>
+
+    <table id="userTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Full name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role(s)</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.name }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.roles|join(', ') }}</td>
+                    <td>{{ u.createdAt ? u.createdAt|date('Y-m-d H:i') : '-' }}</td>
+                    <td>
+                         {% if u.status == 'active' %}
+                           <span class="badge bg-success">Active</span>
+                          {% elseif u.status == 'disabled' %}
+                              <span class="badge bg-warning text-dark">Disabled</span>
+                             {% else %}
+                         <span class="badge bg-secondary">Archived</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{{ path('admin_user_edit', {id: u.id}) }}" class="btn btn-sm btn-warning" title="Edit">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        <a href="{{ path('admin_user_show', { id: u.id }) }}"
+                         class="btn btn-sm btn-secondary"
+                     title="View">
+                      <i class="bi bi-eye"></i>
+                        </a>
+
+
+                        {# Toggle active/disabled (POST) #}
+                        <form method="post" action="{{ path('admin_user_toggle_status', {id: u.id}) }}" style="display:inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_status_' ~ u.id) }}">
+                            <button class="btn btn-sm btn-secondary" title="Toggle active/disabled">
+                                <i class="bi bi-toggle-on"></i>
+                            </button>
+                        </form>
+
+                        {# Archive #}
+                        <form method="post" action="{{ path('admin_user_archive', {id: u.id}) }}" style="display:inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('archive_user_' ~ u.id) }}">
+                            <button class="btn btn-sm btn-dark" title="Archive" onclick="return confirm('Archive user?');">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </form>
+
+                        {# Delete #}
+                        <form method="post" action="{{ path('admin_user_delete', {id: u.id}) }}" style="display:inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ u.id) }}">
+                            <button class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Delete user permanently?');">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="8" class="text-center">No users yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    $(document).ready(function(){
+        $('#userTable').DataTable({ pageLength: 10, lengthMenu: [10,25,50] });
+    });
+</script>
+{% endblock %}

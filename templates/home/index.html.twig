@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% block title %}Welcome to Jelo's Café{% endblock %}
+{% block body %}
+<div class="text-center p-5 bg-light rounded shadow-sm">
+    <h1 class="display-4">Welcome to Jelo's Café</h1>
+    <p class="lead">Freshly brewed coffee & homemade pastries every day ☕🍰</p>
+    <a href="{{ path('menu') }}" class="btn btn-primary btn-lg mt-3">See Our Menu</a>
+
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <img src="https://www.royalcupcoffee.com/sites/default/files/images/blog/AdobeStock_159183621update.jpg"
+                 class="card-img-top img-fluid"
+                 alt="coffee"
+                 style="height:250px; object-fit:cover;">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <img src="https://www.upmenu.com/wp-content/uploads/2022/08/Small-Cafe-Interior-Design.jpg"
+                 class="card-img-top img-fluid"
+                 alt="cafe"
+                 style="height:250px; object-fit:cover;">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <img src="https://ocakes.in/storage/app/public/images/item/item-642f5b5885a38.jpg"
+                 class="card-img-top img-fluid"
+                 alt="pastry"
+                 style="height:250px; object-fit:cover;">
+        </div>
+    </div>
+</div>
+    
+{% endblock %}

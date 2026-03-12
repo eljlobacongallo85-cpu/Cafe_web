@@ -1,0 +1,87 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}My Profile - Admin{% endblock %}
+{% block header %}My Profile{% endblock %}
+{% block subheader %}Manage your account settings{% endblock %}
+
+{% block body %}
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="alert alert-{{ label }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+<div class="card card-compact p-4">
+
+    <h4 class="mb-3">Account Information</h4>
+
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <td>{{ app.user.name }}</td>
+        </tr>
+        <tr>
+            <th>Username</th>
+            <td>{{ app.user.username }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ app.user.email }}</td>
+        </tr>
+        <tr>
+            <th>Role</th>
+            <td>{{ app.user.roles|join(', ') }}</td>
+        </tr>
+        <tr>
+            <th>Created At</th>
+            <td>{{ app.user.createdAt|date("F j, Y g:i A") }}</td>
+        </tr>
+    </table>
+
+    <hr class="my-4">
+
+    {# Button that shows the password form #}
+    <button class="btn btn-dark" type="button" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">
+        <i class="bi bi-key"></i> Change Password
+    </button>
+
+   {# COLLAPSIBLE PASSWORD FORM #}
+<div class="collapse mt-4" id="changePasswordForm">
+
+    <div class="card card-body shadow-sm">
+
+        <h5 class="mb-3">Update your password</h5>
+
+        {{ form_start(changePasswordForm) }}
+
+        <div class="mb-3">
+            {{ form_label(changePasswordForm.oldPassword) }}
+            {{ form_widget(changePasswordForm.oldPassword, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(changePasswordForm.oldPassword) }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(changePasswordForm.newPassword.first) }}
+            {{ form_widget(changePasswordForm.newPassword.first, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(changePasswordForm.newPassword.first) }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(changePasswordForm.newPassword.second) }}
+            {{ form_widget(changePasswordForm.newPassword.second, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(changePasswordForm.newPassword.second) }}
+        </div>
+
+        <button class="btn btn-primary mt-2">
+            <i class="bi bi-save"></i> Update Password
+        </button>
+
+        {{ form_end(changePasswordForm) }}
+    </div>
+
+</div>
+
+
+{% endblock %}

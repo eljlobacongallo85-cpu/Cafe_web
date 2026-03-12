@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Menu{% endblock %}
+
+{% block body %}
+<h2 class="mb-4">Our Menu</h2>
+
+{% for category, items in categories %}
+    <h3 class="mt-4">{{ category }}</h3>
+    <div class="row">
+        {% for product in items %}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    {% if product.image %}
+                        <img src="{{ product.image }}" class="card-img-top" alt="{{ product.name }}" style="height:200px;object-fit:cover;">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description|default('No description') }}</p>
+                        <p><strong>₱{{ product.price|number_format(2, '.', ',') }}</strong></p>
+                        <a href="{{ path('product_order', {id: product.id}) }}" class="btn btn-success btn-sm w-100">🛒 Add to Cart</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No products available.</p>
+{% endfor %}
+{% endblock %}

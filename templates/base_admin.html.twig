@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Admin Panel - Jelo's Café{% endblock %}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <style>
+        :root{
+            --coffee:#4b2e05;
+            --accent:#ffce7a;
+            --bg:#fffdf8;
+            --muted:#d1c6b3;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg,#f8f5f2 0%, #fbfaf9 100%);
+            margin:0;
+            display:flex;
+            min-height:100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width:260px;
+            background:var(--coffee);
+            color:#fff;
+            position:fixed;
+            top:0; left:0;
+            height:100vh;
+            padding:18px 12px;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .brand {
+            text-align:center;
+            margin-bottom:16px;
+        }
+
+        .brand h4 {
+            color:var(--accent);
+            font-weight:700;
+            margin:0;
+        }
+
+        .nav-link {
+            color:#fff;
+            margin:6px 6px;
+            border-radius:8px;
+            padding:10px 12px;
+            display:flex;
+            gap:10px;
+            align-items:center;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background:var(--accent);
+            color:var(--coffee)!important;
+            font-weight:600;
+        }
+
+        .small-muted {
+            color:var(--muted);
+            font-size:.85rem;
+        }
+
+        /* Main */
+        .main-content {
+            margin-left:260px;
+            padding:28px;
+            flex:1;
+            background:var(--bg);
+        }
+
+        .topbar {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:18px;
+        }
+
+        @media (max-width:900px){
+            .sidebar {
+                position:static;
+                width:100%;
+                height:auto;
+            }
+            .main-content {
+                margin-left:0;
+            }
+        }
+
+        table.dataTable thead th {
+            background:#3a3a3a;
+            color:#fff;
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+<nav class="sidebar">
+    <div>
+        <div class="brand">
+            <h4>☕ Jelo's Café</h4>
+
+            {% if is_granted('ROLE_ADMIN') %}
+                <span class="badge bg-warning text-dark mt-1">
+                    <i class="bi bi-shield-lock"></i> Admin
+                </span>
+            {% elseif is_granted('ROLE_STAFF') %}
+                <span class="badge bg-info text-dark mt-1">
+                    <i class="bi bi-person-badge"></i> Staff
+                </span>
+            {% endif %}
+        </div>
+
+        <a href="{{ path('account_profile') }}"
+           class="nav-link {% if app.request.get('_route') == 'account_profile' %}active{% endif %}">
+            <i class="bi bi-person-circle"></i> My Profile
+        </a>
+
+        {# STAFF DASHBOARD (STAFF ONLY) #}
+        {% if is_granted('ROLE_STAFF') and not is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('staff_dashboard') }}"
+               class="nav-link {% if app.request.get('_route') == 'staff_dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer"></i> Staff Dashboard
+            </a>
+        {% endif %}
+
+        {# ADMIN DASHBOARD #}
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('admin_dashboard') }}"
+               class="nav-link {% if app.request.get('_route') == 'admin_dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Admin Dashboard
+            </a>
+        {% endif %}
+
+        <a href="{{ path('admin_product_index') }}"
+           class="nav-link {% if app.request.get('_route') starts with 'admin_product' %}active{% endif %}">
+            <i class="bi bi-cup-hot"></i> Products
+        </a>
+
+        <a href="{{ path('admin_order_index') }}"
+           class="nav-link {% if app.request.get('_route') starts with 'admin_order' %}active{% endif %}">
+            <i class="bi bi-receipt"></i> Orders
+        </a>
+
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('admin_user_index') }}"
+               class="nav-link {% if app.request.get('_route') starts with 'admin_user' %}active{% endif %}">
+                <i class="bi bi-people"></i> Users
+            </a>
+
+            <a href="{{ path('admin_activity') }}"
+               class="nav-link {% if app.request.get('_route') == 'admin_activity' %}active{% endif %}">
+                <i class="bi bi-journal-text"></i> Activity Logs
+            </a>
+        {% endif %}
+
+        <a href="{{ path('logout') }}" class="nav-link"
+           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+
+        <form id="logout-form" action="{{ path('logout') }}" method="post" style="display:none;">
+            <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+        </form>
+    </div>
+
+    <div class="mt-auto text-center">
+        <small class="small-muted">© {{ "now"|date("Y") }} Jelo's Café</small>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="topbar">
+        <div>
+            <h2 class="m-0">{% block header %}{% endblock %}</h2>
+            <div class="text-muted">{% block subheader %}{% endblock %}</div>
+        </div>
+
+        {% if app.user %}
+            <div class="text-end">
+                <div class="fw-semibold">{{ app.user.username }}</div>
+                <div class="text-muted small">{{ app.user.email }}</div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% block body %}{% endblock %}
+</main>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+{% block javascripts %}{% endblock %}
+</body>
+</html>

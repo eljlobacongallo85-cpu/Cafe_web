@@ -16,5 +16,13 @@ services:
     App\:
         resource: '../src/'
 
+    App\EventListener\LoginListener:
+        tags:
+            - { name: kernel.event_listener, event: Symfony\Component\Security\Http\Event\InteractiveLoginEvent, method: onSecurityInteractiveLogin }
+
+    App\EventListener\LogoutLogger:
+        tags:
+            - { name: kernel.event_listener, event: Symfony\Component\Security\Http\Event\LogoutEvent, method: onLogout }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

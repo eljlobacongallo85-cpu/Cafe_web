@@ -1,0 +1,53 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}View User{% endblock %}
+{% block header %}User Details{% endblock %}
+
+{% block body %}
+<div class="card p-4">
+    <h4 class="mb-3">👤 User Information</h4>
+
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <td>{{ user.id }}</td>
+        </tr>
+        <tr>
+            <th>Full Name</th>
+            <td>{{ user.name }}</td>
+        </tr>
+        <tr>
+            <th>Username</th>
+            <td>{{ user.username }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ user.email }}</td>
+        </tr>
+        <tr>
+            <th>Roles</th>
+            <td>{{ user.roles|join(', ') }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+                    <td>
+                         {% if user.status == 'active' %}
+                           <span class="badge bg-success">Active</span>
+                          {% elseif user.status == 'disabled' %}
+                              <span class="badge bg-warning text-dark">Disabled</span>
+                             {% else %}
+                         <span class="badge bg-secondary">Archived</span>
+                        {% endif %}
+                    </td>
+        </tr>
+        <tr>
+            <th>Created At</th>
+            <td>{{ user.createdAt|date('Y-m-d H:i') }}</td>
+        </tr>
+    </table>
+
+    <a href="{{ path('admin_user_index') }}" class="btn btn-secondary mt-3">
+        ← Back to Users
+    </a>
+</div>
+{% endblock %}

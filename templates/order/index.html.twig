@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Orders — Jelo's Café{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center fw-bold">☕ My Orders</h2>
+
+    {% if orders is not empty %}
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.createdAt|date('Y-m-d H:i') }}</td>
+                            <td>{{ order.customerName }}</td>
+                            <td><strong>₱{{ order.totalPrice|number_format(2) }}</strong></td>
+                            <td>{{ order.notes ?: '—' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center shadow-sm mt-4">
+            <h5>No orders yet 😔</h5>
+            <p>Looks like you haven’t placed an order yet. Check out our <a href="{{ path('menu') }}" class="fw-bold text-decoration-none text-primary">menu</a> and start ordering!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

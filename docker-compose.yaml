@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    container_name: jelocafe_app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/apache.conf:/etc/apache2/sites-available/000-default.conf
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: jelocafe_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: jelo123
+      MYSQL_DATABASE: JeloCafeDB
+      MYSQL_USER: Jelo
+      MYSQL_PASSWORD: 12345
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:

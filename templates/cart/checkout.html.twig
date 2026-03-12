@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout – Jelo's Café{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">✅ Checkout</h2>
+
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    🛍 Order Summary
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for id, item in cart %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item.name }}</strong>
+                                <small class="text-muted">x{{ item.quantity }}</small>
+                            </div>
+                            <span>₱{{ item.price * item.quantity }}</span>
+                        </li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between fw-bold">
+                        <span>Total</span>
+                        <span>₱{{ total }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    👤 Customer Details
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('checkout') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contact" class="form-label">Contact Number *</label>
+                            <input type="text" id="contact" name="contact" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes (optional)</label>
+                            <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            ✅ Place Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{{ path('view_cart') }}" class="btn btn-outline-primary">⬅ Back to Cart</a>
+    </div>
+</div>
+{% endblock %}

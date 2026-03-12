@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\User;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+
+class ApiAuthController extends AbstractController
+{
+    #[Route('/api/login', name: 'api_login', methods: ['POST'])]
+    public function login(
+        Request $request,
+        UserRepository $users,
+        UserPasswordHasherInterface $hasher
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            $payload = $request->request->all();
+        }
+
+        $identifier = trim((string) ($payload['identifier'] ?? $payload['username'] ?? $payload['email'] ?? ''));
+        $password = (string) ($payload['password'] ?? '');
+
+        if ($identifier === '' || $password === '') {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Missing credentials.',
+            ], 400);
+        }
+
+        $user = $users->findOneBy(['username' => $identifier]);
+        if (!$user && str_contains($identifier, '@')) {
+            $user = $users->findOneBy(['email' => $identifier]);
+        }
+
+        if (!$user) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Invalid credentials.',
+            ], 401);
+        }
+
+        if (!$hasher->isPasswordValid($user, $password)) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Invalid credentials.',
+            ], 401);
+        }
+
+        if (method_exists($user, 'isActive') && !$user->isActive()) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Account inactive.',
+            ], 403);
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'user' => [
+                'id' => $user->getId(),
+                'username' => $user->getUserIdentifier(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+                'name' => $user->getName(),
+            ],
+        ]);
+    }
+
+    #[Route('/api/register', name: 'api_register', methods: ['POST'])]
+    public function register(
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $users,
+        UserPasswordHasherInterface $hasher
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            $payload = $request->request->all();
+        }
+
+        $email = trim((string) ($payload['email'] ?? ''));
+        $password = (string) ($payload['password'] ?? '');
+        $username = trim((string) ($payload['username'] ?? ''));
+        $name = trim((string) ($payload['name'] ?? ''));
+
+        if ($email === '' || $password === '') {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Email and password are required.',
+            ], 400);
+        }
+
+        if ($username === '') {
+            $atPos = strpos($email, '@');
+            $username = $atPos !== false ? substr($email, 0, $atPos) : $email;
+        }
+
+        if ($name === '') {
+            $name = $username;
+        }
+
+        if ($username === '' || $name === '') {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Username and name are required.',
+            ], 400);
+        }
+
+        if ($users->findOneBy(['username' => $username])) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Username already exists.',
+            ], 409);
+        }
+
+        if ($users->findOneBy(['email' => $email])) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Email already exists.',
+            ], 409);
+        }
+
+        $user = new User();
+        $user->setUsername($username);
+        $user->setEmail($email);
+        $user->setName($name);
+        $user->setPassword($hasher->hashPassword($user, $password));
+
+        $em->persist($user);
+        $em->flush();
+
+        return new JsonResponse([
+            'ok' => true,
+            'user' => [
+                'id' => $user->getId(),
+                'username' => $user->getUserIdentifier(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+                'name' => $user->getName(),
+            ],
+        ], 201);
+    }
+}

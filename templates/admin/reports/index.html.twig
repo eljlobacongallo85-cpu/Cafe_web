@@ -1,0 +1,61 @@
+{% extends 'base_admin.html.twig' %}
+{% block title %}Sales Reports{% endblock %}
+{% block header %}Sales Reports{% endblock %}
+
+{% block body %}
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card p-3 card-compact">
+            <small class="text-muted">Total Sales</small>
+            <div class="h4 text-success">₱{{ totalSales|number_format(2, '.', ',') }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 card-compact">
+            <small class="text-muted">Total Orders</small>
+            <div class="h4 text-primary">{{ totalOrders }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 card-compact">
+            <small class="text-muted">Donation (10%)</small>
+            <div class="h4 text-danger">₱{{ donation|number_format(2, '.', ',') }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h6>Monthly Sales Overview</h6>
+        <canvas id="salesChart" height="90"></canvas>
+    </div>
+</div>
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = {{ salesLabels|json_encode|raw }};
+    const data = {{ salesValues|json_encode|raw }};
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Sales (₱)',
+                data: data,
+                backgroundColor: 'rgba(75,46,5,0.9)',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero:true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

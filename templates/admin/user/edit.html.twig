@@ -1,0 +1,61 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Edit User{% endblock %}
+{% block header %}<i class="bi bi-pencil-square"></i> Edit User{% endblock %}
+{% block subheader %}Modify the user’s account details below.{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm border-0 rounded-3 p-4">
+
+    {{ form_start(form) }}
+
+    <div class="row g-3">
+
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-person"></i> Full Name
+            </label>
+            {{ form_widget(form.name, {attr: {class: 'form-control form-control-lg'}}) }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-person-badge"></i> Username
+            </label>
+            {{ form_widget(form.username, {attr: {class: 'form-control form-control-lg'}}) }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-envelope"></i> Email
+            </label>
+            {{ form_widget(form.email, {attr: {class: 'form-control form-control-lg'}}) }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-key"></i> New Password
+            </label>
+            {{ form_widget(form.password, {attr: {class: 'form-control form-control-lg'}}) }}
+            <small class="text-muted">Leave blank to keep existing password.</small>
+        </div>
+
+        <div class="col-md-12 mt-2">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-shield-lock"></i> User Role
+            </label>
+            <div class="role-checkbox-group p-3 border rounded">
+                {{ form_widget(form.roles) }}
+            </div>
+        </div>
+
+    </div>
+
+    <button class="btn btn-warning btn-lg w-100 mt-4">
+        <i class="bi bi-save"></i> Update User
+    </button>
+
+    {{ form_end(form) }}
+
+</div>
+{% endblock %}

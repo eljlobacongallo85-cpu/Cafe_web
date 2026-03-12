@@ -1,0 +1,12 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Delete Order{% endblock %}
+{% block header %}Confirm Deletion{% endblock %}
+
+{% block body %}
+<div class="alert alert-warning p-4 text-center">
+    <p>Are you sure you want to delete Order #{{ order.id }} from {{ order.customerName }}?</p>
+    <a href="{{ path('admin_order_index') }}" class="btn btn-secondary">Cancel</a>
+    <a href="{{ path('admin_order_delete') }}" class="btn btn-danger">Yes, Delete</a>
+</div>
+{% endblock %}

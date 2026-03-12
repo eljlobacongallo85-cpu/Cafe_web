@@ -1,0 +1,95 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block header %}
+    Dashboard
+{% endblock %}
+
+{% block subheader %}
+    Staff Dashboard — limited access
+{% endblock %}
+
+{% block body %}
+
+{# INFO BANNER #}
+<div class="alert alert-warning d-flex align-items-center mb-4">
+    <i class="bi bi-shield-lock me-2 fs-5"></i>
+    <div>
+        You are logged in as <strong>Staff</strong>.  
+        Admin-only features are hidden and restricted.
+    </div>
+</div>
+
+{# STATS CARDS #}
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body d-flex align-items-center">
+                <div class="me-3 text-primary fs-2">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Products Created</div>
+                    <div class="fs-3 fw-bold">{{ totalProducts }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body d-flex align-items-center">
+                <div class="me-3 text-success fs-2">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Orders Created</div>
+                    <div class="fs-3 fw-bold">{{ totalOrders }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# RECENT ORDERS #}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold">
+        <i class="bi bi-clock-history me-1"></i>
+        Recent Orders
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td class="fw-semibold">#{{ order.id }}</td>
+                        <td class="fw-bold text-success">
+                            ₱{{ order.totalPrice|number_format(2) }}
+                        </td>
+                        <td class="text-muted">
+                            {{ order.createdAt|date('M d, Y · H:i') }}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No orders yet
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

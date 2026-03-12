@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Your Cart – Jelo's Café{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">🛍 Your Cart</h2>
+
+    {% if cart is empty %}
+        <div class="alert alert-info text-center">
+            Your cart is empty. <a href="{{ path('menu') }}">Go back to menu</a>.
+        </div>
+    {% else %}
+        <table class="table table-bordered shadow-sm align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for id, item in cart %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>₱{{ item.price }}</td>
+                        <td class="text-center">
+                            <a href="{{ path('cart_decrease', {id: id}) }}" class="btn btn-sm btn-outline-secondary">➖</a>
+                            <span class="mx-2">{{ item.quantity }}</span>
+                            <a href="{{ path('cart_increase', {id: id}) }}" class="btn btn-sm btn-outline-secondary">➕</a>
+                        </td>
+                        <td>₱{{ item.price * item.quantity }}</td>
+                        <td class="text-center">
+                            <a href="{{ path('cart_remove', {id: id}) }}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Remove {{ item.name }} from your cart?');">
+                                🗑 Remove
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="fw-bold">
+                <tr>
+                    <td colspan="3" class="text-end">Total:</td>
+                    <td colspan="2">₱{{ total }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{{ path('menu') }}" class="btn btn-outline-primary">⬅ Continue Shopping</a>
+            <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger"
+               onclick="return confirm('Are you sure you want to clear your cart?');">
+                🗑 Clear Cart
+            </a>
+            <a href="{{ path('checkout') }}" class="btn btn-success">✅ Proceed to Checkout</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

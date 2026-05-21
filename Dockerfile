@@ -5,7 +5,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 
 FROM php:8.2-apache
 
-RUN a2dismod mpm_event mpm_worker || true \
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork rewrite headers
 
 RUN apt-get update && apt-get install -y \

@@ -29,6 +29,7 @@ COPY . .
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
 RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction \
+    && mkdir -p var \
     && chown -R www-data:www-data var
 
 COPY docker/entrypoint.sh /entrypoint.sh

@@ -5,7 +5,8 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 
 FROM php:8.2-apache
 
-RUN a2enmod rewrite headers
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork rewrite headers
 
 RUN apt-get update && apt-get install -y \
     git unzip libicu-dev libzip-dev \

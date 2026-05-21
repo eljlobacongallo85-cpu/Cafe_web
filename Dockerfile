@@ -28,7 +28,7 @@ COPY . .
 # Use our Symfony-friendly vhost
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction --no-progress \
+RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction \
     && chown -R www-data:www-data var
 
 COPY docker/entrypoint.sh /entrypoint.sh

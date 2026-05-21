@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\OrderItemRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +17,8 @@ class AdminDashboardController extends AbstractController
     #[Route('/dashboard', name: 'admin_dashboard')]
     public function index(
         OrderRepository $orderRepository,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        OrderItemRepository $orderItemRepository
     ): Response {
         $orders = $orderRepository->findAll();
 
@@ -34,6 +36,7 @@ class AdminDashboardController extends AbstractController
             'totalProducts' => $totalProducts,
             'totalDonation' => $totalDonation,
             'orders'        => $orders, // REQUIRED for Recent Orders
+            'topProducts'   => $orderItemRepository->findTopSellingProducts(5),
         ]);
     }
 }

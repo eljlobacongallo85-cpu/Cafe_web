@@ -1,30 +1,63 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
-{% block title %}Menu{% endblock %}
+{% block title %}Menu - Jelo's Cafe{% endblock %}
 
 {% block body %}
-<h2 class="mb-4">Our Menu</h2>
-
-{% for category, items in categories %}
-    <h3 class="mt-4">{{ category }}</h3>
-    <div class="row">
-        {% for product in items %}
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm h-100">
-                    {% if product.image %}
-                        <img src="{{ product.image }}" class="card-img-top" alt="{{ product.name }}" style="height:200px;object-fit:cover;">
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ product.name }}</h5>
-                        <p class="card-text">{{ product.description|default('No description') }}</p>
-                        <p><strong>₱{{ product.price|number_format(2, '.', ',') }}</strong></p>
-                        <a href="{{ path('product_order', {id: product.id}) }}" class="btn btn-success btn-sm w-100">🛒 Add to Cart</a>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+<section class="gradient-hero mb-5">
+    <p class="section-subtitle">Our menu</p>
+    <h1 class="display-4 fw-bold mb-3">What we're pouring and baking today</h1>
+    <p class="lead text-white-75 mb-4">Browse caffeine-forward pours, seasonal cold brews, and pastries that pair perfectly with every sip.</p>
+    <div class="d-flex flex-wrap gap-3">
+        <a href="{{ path('view_cart') }}" class="btn btn-light btn-lg text-dark">See your cart</a>
+        <a href="{{ path('contact') }}#contact-form" class="btn btn-outline-light btn-lg">Share a request</a>
     </div>
-{% else %}
-    <p>No products available.</p>
-{% endfor %}
+</section>
+
+<section class="page-section">
+    <div class="mb-4">
+        <p class="section-subtitle text-muted">Seasonal offerings</p>
+        <h2 class="section-heading mb-1">Fresh from the case and brew bar</h2>
+        <p class="text-muted mb-0">Each category showcases what's available today - tap "Add to Cart" to reserve a spot at the espresso bar.</p>
+    </div>
+
+    {% if categories is empty %}
+        <p class="text-muted">No products available at the moment. Check back soon.</p>
+    {% endif %}
+
+    {% for category, items in categories %}
+        <div class="mb-5">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-column flex-md-row gap-2">
+                <div>
+                    <p class="section-subtitle text-muted mb-1">{{ category }}</p>
+                    <h3 class="h4 fw-semibold mb-0">{{ items|length }} items</h3>
+                </div>
+                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2">Crafted in-house</span>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for product in items %}
+                    <div class="col">
+                        <article class="menu-card p-4 h-100 d-flex flex-column">
+                            <div class="ratio ratio-4x3 rounded-4 overflow-hidden mb-3 bg-light">
+                                {% if product.image %}
+                                    <img src="{{ product.image }}" class="w-100 h-100" alt="{{ product.name }}">
+                                {% else %}
+                                    <div class="d-flex align-items-center justify-content-center h-100 text-muted">No image available</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">{{ product.name }}</h5>
+                                <p class="text-muted mb-3">{{ product.description|default('No description yet for this batch.') }}</p>
+                            </div>
+                            <div class="mt-auto">
+                                <p class="price-tag mb-3">&#8369;{{ product.price|number_format(2, '.', ',') }}</p>
+                                <a href="{{ path('product_order', {id: product.id}) }}" class="btn btn-warning w-100">Add to Cart</a>
+                            </div>
+                        </article>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</section>
 {% endblock %}

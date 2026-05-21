@@ -3,12 +3,9 @@ services:
     build: .
     container_name: jelocafe_app
     ports:
-      - "8080:80"
+      - "8000:80"
     volumes:
       - .:/var/www/html
-      - ./docker/apache.conf:/etc/apache2/sites-available/000-default.conf
-    env_file:
-      - .env
     depends_on:
       - mysql
 

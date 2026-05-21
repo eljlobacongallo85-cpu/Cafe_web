@@ -1,0 +1,32 @@
+name: Cafe API Test Env
+values:
+  - key: baseUrl
+    value: 'http://localhost:8000'
+    enabled: true
+  - key: staffUsername
+    value: staff
+    enabled: true
+  - key: staffPassword
+    value: secret
+    enabled: true
+  - key: testProductId
+    value: '1'
+    enabled: true
+  - key: registerEmail
+    value: your@email.com
+    enabled: true
+  - key: registerPassword
+    value: yourpassword
+    enabled: true
+  - key: registerUsername
+    value: yourusername
+    enabled: true
+  - key: registerName
+    value: Your Name
+    enabled: true
+  - key: staffToken
+    value: '1'
+    enabled: true
+  - key: registeredUserId
+    value: ''
+    enabled: true

@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Account · Jelo's Cafe{% endblock %}
+
+{% block body %}
+    <div class="page-section">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <div class="section-subtitle">Account</div>
+                <h2 class="section-heading mb-1">My Profile</h2>
+                <div class="text-muted">Manage your account settings</div>
+            </div>
+            <div class="text-end">
+                <div class="fw-semibold">{{ app.user.username }}</div>
+                <div class="text-muted small">{{ app.user.email }}</div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3">Account Information</h4>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <tr>
+                            <th class="text-nowrap">Name</th>
+                            <td>{{ app.user.name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-nowrap">Username</th>
+                            <td>{{ app.user.username }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-nowrap">Email</th>
+                            <td>{{ app.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-nowrap">Created At</th>
+                            <td>{{ app.user.createdAt|date("F j, Y g:i A") }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <hr class="my-4">
+
+                <button class="btn btn-dark" type="button" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">
+                    Change Password
+                </button>
+
+                <div class="collapse mt-4" id="changePasswordForm">
+                    <div class="card card-body shadow-sm">
+                        <h5 class="mb-3">Update your password</h5>
+
+                        {{ form_start(changePasswordForm) }}
+
+                        <div class="mb-3">
+                            {{ form_label(changePasswordForm.oldPassword) }}
+                            {{ form_widget(changePasswordForm.oldPassword, { attr: { class: 'form-control' } }) }}
+                            {{ form_errors(changePasswordForm.oldPassword) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(changePasswordForm.newPassword.first) }}
+                            {{ form_widget(changePasswordForm.newPassword.first, { attr: { class: 'form-control' } }) }}
+                            {{ form_errors(changePasswordForm.newPassword.first) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(changePasswordForm.newPassword.second) }}
+                            {{ form_widget(changePasswordForm.newPassword.second, { attr: { class: 'form-control' } }) }}
+                            {{ form_errors(changePasswordForm.newPassword.second) }}
+                        </div>
+
+                        <button class="btn btn-primary mt-2">Update Password</button>
+
+                        {{ form_end(changePasswordForm) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

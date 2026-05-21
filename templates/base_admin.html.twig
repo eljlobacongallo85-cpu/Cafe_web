@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}Admin Panel - Jelo's Café{% endblock %}</title>
+    <title>{% block title %}Admin Panel - Jelo's Cafe{% endblock %}</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -111,7 +111,7 @@
 <nav class="sidebar">
     <div>
         <div class="brand">
-            <h4>☕ Jelo's Café</h4>
+            <h4>Jelo's Cafe</h4>
 
             {% if is_granted('ROLE_ADMIN') %}
                 <span class="badge bg-warning text-dark mt-1">
@@ -145,15 +145,17 @@
             </a>
         {% endif %}
 
-        <a href="{{ path('admin_product_index') }}"
-           class="nav-link {% if app.request.get('_route') starts with 'admin_product' %}active{% endif %}">
-            <i class="bi bi-cup-hot"></i> Products
-        </a>
+        {% if is_granted('ROLE_STAFF') %}
+            <a href="{{ path('admin_product_index') }}"
+               class="nav-link {% if app.request.get('_route') starts with 'admin_product' %}active{% endif %}">
+                <i class="bi bi-cup-hot"></i> Products
+            </a>
 
-        <a href="{{ path('admin_order_index') }}"
-           class="nav-link {% if app.request.get('_route') starts with 'admin_order' %}active{% endif %}">
-            <i class="bi bi-receipt"></i> Orders
-        </a>
+            <a href="{{ path('admin_order_index') }}"
+               class="nav-link {% if app.request.get('_route') starts with 'admin_order' %}active{% endif %}">
+                <i class="bi bi-receipt"></i> Orders
+            </a>
+        {% endif %}
 
         {% if is_granted('ROLE_ADMIN') %}
             <a href="{{ path('admin_user_index') }}"
@@ -178,7 +180,7 @@
     </div>
 
     <div class="mt-auto text-center">
-        <small class="small-muted">© {{ "now"|date("Y") }} Jelo's Café</small>
+        <small class="small-muted">Copyright {{ "now"|date("Y") }} Jelo's Cafe</small>
     </div>
 </nav>
 

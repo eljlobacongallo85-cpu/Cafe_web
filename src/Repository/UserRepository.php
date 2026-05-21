@@ -33,6 +33,15 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
+    public function findOneByApiTokenHash(string $apiTokenHash): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.apiTokenHash = :hash')
+            ->setParameter('hash', $apiTokenHash)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     //    /**
     //     * @return User[] Returns an array of User objects
     //     */

@@ -6,6 +6,7 @@ use App\Entity\Order;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,24 @@ class AdminOrderController extends AbstractController
 
         return $this->render('admin/orders/index.html.twig', [
             'orders' => $orders,
+        ]);
+    }
+
+    #[Route('/feed', name: 'admin_order_feed', methods: ['GET'])]
+    public function feed(OrderRepository $orderRepository): JsonResponse
+    {
+        $totalCount = $orderRepository->count([]);
+        $orders = $orderRepository->findBy([], ['createdAt' => 'DESC'], 100);
+
+        return new JsonResponse([
+            'ok' => true,
+            'totalCount' => $totalCount,
+            'orders' => array_map(static fn (Order $order) => [
+                'id' => $order->getId(),
+                'customerName' => $order->getCustomerName(),
+                'totalPrice' => (float) $order->getTotalPrice(),
+                'createdAt' => $order->getCreatedAt()?->format(DATE_ATOM),
+            ], $orders),
         ]);
     }
 

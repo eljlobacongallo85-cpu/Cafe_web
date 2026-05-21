@@ -20,6 +20,13 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\ApiTokenAuthenticator
+
         main:
             lazy: true
             provider: app_user_provider
@@ -27,6 +34,7 @@ security:
 
             custom_authenticators:
                 - App\Security\LoginFormAuthenticator
+                - App\Security\GoogleAuthenticator
 
             entry_point: App\Security\LoginFormAuthenticator
 
@@ -43,8 +51,16 @@ security:
                 user_providers: [app_user_provider]
 
     access_control:
+        - { path: ^/verify/email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/verify/email, roles: PUBLIC_ACCESS }
+        - { path: ^/connect/google, roles: PUBLIC_ACCESS }
+        - { path: ^/register$, roles: PUBLIC_ACCESS }
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/hello$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/products, roles: PUBLIC_ACCESS }
+        - { path: ^/api/staff, roles: ROLE_STAFF }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         # ADMIN ONLY ROUTES
         - { path: ^/admin/users, roles: ROLE_ADMIN }
         - { path: ^/admin/logs, roles: ROLE_ADMIN }
@@ -52,7 +68,7 @@ security:
 
         # STAFF + ADMIN
         - { path: ^/admin/dashboard, roles: ROLE_ADMIN }
-        - { path: ^/admin/products, roles: ROLE_STAFF }
+        - { path: ^/admin/product, roles: ROLE_STAFF }
         - { path: ^/admin/orders, roles: ROLE_STAFF }
 
         # STAFF AREA
@@ -63,7 +79,7 @@ security:
         - { path: ^/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/cart, roles: PUBLIC_ACCESS }
         - { path: ^/menu, roles: PUBLIC_ACCESS }
-        - { path: ^/orders, roles: PUBLIC_ACCESS }
+        - { path: ^/my-orders, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/$, roles: PUBLIC_ACCESS }
 
 when@test:

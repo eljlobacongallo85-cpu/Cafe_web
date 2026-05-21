@@ -3,6 +3,7 @@
 namespace App\Security;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,20 +26,36 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     public const LOGIN_ROUTE = 'app_login';
 
     public function __construct(
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface $urlGenerator,
+        private UserRepository $users
     ) {}
 
     public function authenticate(Request $request): Passport
 {
-    $username = $request->request->get('username', '');
+    $identifier = trim((string) $request->request->get('username', ''));
 
     $request->getSession()->set(
         SecurityRequestAttributes::LAST_USERNAME,
-        $username
+        $identifier
     );
 
     return new Passport(
-        new UserBadge($username),
+        new UserBadge($identifier, function (string $identifier): ?User {
+            $user = $this->users->findOneBy(['username' => $identifier]);
+            if (!$user && str_contains($identifier, '@')) {
+                $user = $this->users->findOneBy(['email' => $identifier]);
+            }
+            if (!$user) {
+                throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+            }
+            if (method_exists($user, 'isActive') && !$user->isActive()) {
+                throw new CustomUserMessageAuthenticationException('Your account is not active. Contact an administrator.');
+            }
+            if (method_exists($user, 'isVerified') && !$user->isVerified()) {
+                throw new CustomUserMessageAuthenticationException('Please verify your email before logging in.');
+            }
+            return $user;
+        }),
         new PasswordCredentials(
             $request->request->get('password', '')
         ),
@@ -61,16 +78,13 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         /** @var User $user */
         $user = $token->getUser();
 
-        // 🚫 Block inactive users
-        if (!$user->isActive()) {
-            throw new CustomUserMessageAuthenticationException(
-                'Your account is not active. Contact an administrator.'
-            );
-        }
-
         // Redirect to saved target path
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            return new RedirectResponse($targetPath);
+            $loginUrl = $this->urlGenerator->generate(self::LOGIN_ROUTE);
+            $targetPathPath = parse_url($targetPath, PHP_URL_PATH) ?: $targetPath;
+            if ($targetPathPath !== $loginUrl) {
+                return new RedirectResponse($targetPath);
+            }
         }
 
         $roles = $token->getRoleNames();
@@ -87,7 +101,13 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             );
         }
 
-        // Normal users
+        if (in_array('ROLE_CUSTOMER', $roles, true)) {
+            return new RedirectResponse(
+                $this->urlGenerator->generate('homepage')
+            );
+        }
+
+        // Normal users / fallback
         return new RedirectResponse(
             $this->urlGenerator->generate('homepage')
         );

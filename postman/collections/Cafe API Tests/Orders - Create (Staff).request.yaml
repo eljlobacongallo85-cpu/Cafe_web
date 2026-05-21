@@ -1,0 +1,27 @@
+$kind: http-request
+name: Orders / Create (Staff)
+url: "{{baseUrl}}/api/orders"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "customerName": "API Guest",
+      "contact": "09171234567",
+      "notes": "Created via Postman",
+      "items": [
+        { "productId": {{testProductId}}, "quantity": 1 }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Create order returns 201", () =>
+      pm.response.to.have.status(201));
+
+      pm.test("Response exposes order id", () =>
+      pm.expect(pm.response.json().order.id).to.be.a("number"));
+    language: text/javascript
+order: 4000

@@ -28,7 +28,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
         }
 
         #[Route('/admin/users/create', name: 'admin_user_create')]
-        public function create(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher, ActivityLogger $logger): Response
+        public function create(
+            Request $request,
+            EntityManagerInterface $em,
+            UserPasswordHasherInterface $hasher,
+            ActivityLogger $logger,
+            \App\Service\EmailVerificationService $verification
+        ): Response
         {
             $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
@@ -46,9 +52,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
                 $em->persist($user);
                 $em->flush();
 
+                $verification->startVerification($user);
+
                 $logger->record('CREATE', sprintf('User: %s (ID: %d)', $user->getUserIdentifier(), $user->getId()));
 
-                $this->addFlash('success', 'User created.');
+                $this->addFlash('success', 'User created. Verification email sent.');
                 return $this->redirectToRoute('admin_user_index');
             }
 

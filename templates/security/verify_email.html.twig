@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+{% block title %}Email Verification{% endblock %}
+
+{% block body %}
+<div class="text-center p-5 bg-light rounded shadow-sm">
+    {% if status == 'verified' %}
+        <h1 class="h3 mb-3">Email Verified</h1>
+        <p>Your email is now verified. You can log in.</p>
+        <a href="{{ path('app_login') }}" class="btn btn-dark">Go to Login</a>
+    {% elseif status == 'missing' %}
+        <h1 class="h3 mb-3">Missing Token</h1>
+        <p>The verification link is missing a token.</p>
+    {% else %}
+        <h1 class="h3 mb-3">Invalid Link</h1>
+        <p>This verification link is invalid or has already been used.</p>
+    {% endif %}
+</div>
+{% endblock %}

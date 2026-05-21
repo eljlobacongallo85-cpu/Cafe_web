@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ title }} | Jelo's Cafe{% endblock %}
+
+{% block body %}
+<style>
+    .experience-hero {
+        border-radius: 28px;
+        padding: 3rem;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        box-shadow: 0 25px 45px rgba(75, 46, 5, 0.2);
+    }
+
+    .experience-hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 28px;
+        background: linear-gradient(120deg, rgba(4, 4, 4, 0.65), rgba(4, 4, 4, 0.05));
+    }
+
+    .experience-hero > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .experience-detail-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .experience-detail-list li {
+        margin-bottom: 0.75rem;
+        padding-left: 1.1rem;
+    }
+
+    .experience-detail-list li::before {
+        content: '\2022';
+        margin-left: -1.1rem;
+        margin-right: 0.35rem;
+        color: #d96b1a;
+    }
+</style>
+
+<section class="experience-hero text-white" style="background-image: linear-gradient(135deg, rgba(75, 46, 5, 0.85), rgba(239, 180, 120, 0.2)), url('{{ heroImage }}');">
+    <p class="text-uppercase small text-white-75 mb-2">Experience</p>
+    <h1 class="display-4 fw-bold mb-3">{{ title }}</h1>
+    <p class="lead text-white-75 mb-0">{{ summary }}</p>
+</section>
+
+<section class="row g-4 mt-4">
+    <div class="col-lg-7">
+        <h2 class="h4 mb-3">What you get</h2>
+        <ul class="experience-detail-list text-muted">
+            {% for detail in details %}
+                <li>{{ detail }}</li>
+            {% endfor %}
+        </ul>
+        <p class="text-muted small mt-3">Want to hear more stories from the team? <a href="{{ path('contact') }}" class="text-decoration-underline">Drop us a note</a>.</p>
+    </div>
+    <div class="col-lg-5">
+        <div class="p-4 rounded-4 shadow-sm" style="background: #fff;">
+            <p class="text-muted mb-3">{{ sideNote }}</p>
+            <a href="{{ path(ctaRoute) }}" class="btn btn-warning w-100 mb-2">{{ ctaLabel }}</a>
+            <a href="{{ path('homepage') }}" class="btn btn-link w-100 text-muted">Back to home</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

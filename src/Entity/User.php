@@ -41,6 +41,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 180)]
     private string $name = '';
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    private ?string $verificationToken = null;
+
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    private ?string $apiTokenHash = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $apiTokenCreatedAt = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -140,6 +152,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setName(string $name): self
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setVerified(bool $verified): self
+    {
+        $this->isVerified = $verified;
+        return $this;
+    }
+
+    public function getVerificationToken(): ?string
+    {
+        return $this->verificationToken;
+    }
+
+    public function setVerificationToken(?string $token): self
+    {
+        $this->verificationToken = $token;
+        return $this;
+    }
+
+    public function getApiTokenHash(): ?string
+    {
+        return $this->apiTokenHash;
+    }
+
+    public function setApiTokenHash(?string $hash): self
+    {
+        $this->apiTokenHash = $hash;
+        return $this;
+    }
+
+    public function getApiTokenCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->apiTokenCreatedAt;
+    }
+
+    public function setApiTokenCreatedAt(?\DateTimeImmutable $createdAt): self
+    {
+        $this->apiTokenCreatedAt = $createdAt;
         return $this;
     }
 

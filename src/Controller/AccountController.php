@@ -10,10 +10,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class AccountController extends AbstractController
 {
   #[Route('/account/profile', name: 'account_profile')]
+  #[IsGranted('IS_AUTHENTICATED_FULLY')]
 public function profile(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): Response
 {
     /** @var User $user */
@@ -39,7 +41,11 @@ public function profile(Request $request, UserPasswordHasherInterface $passwordH
         }
     }
 
-    return $this->render('account/profile.html.twig', [
+    $template = ($this->isGranted('ROLE_STAFF') || $this->isGranted('ROLE_ADMIN'))
+        ? 'account/profile.html.twig'
+        : 'account/customer_profile.html.twig';
+
+    return $this->render($template, [
         'changePasswordForm' => $form->createView(),
     ]);
 }

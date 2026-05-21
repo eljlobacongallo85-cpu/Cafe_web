@@ -11,10 +11,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class OrderController extends AbstractController
 {
     #[Route('/checkout', name: 'checkout', methods: ['GET', 'POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function checkout(Request $request, SessionInterface $session, EntityManagerInterface $em): Response
     {
         $cart = $session->get('cart', []);
@@ -40,17 +42,12 @@ class OrderController extends AbstractController
             $order->setNotes($notes);
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setTotalPrice($total);
+            $order->setCreatedBy($this->getUser());
 
             foreach ($cart as $id => $item) {
                 $product = $em->getRepository(Product::class)->find($id);
 
                 if (!$product) continue;
-
-                // ⭐ Stock validation
-                if ($product->getStock() < $item['quantity']) {
-                    $this->addFlash('danger', "Not enough stock for {$product->getName()}.");
-                    return $this->redirectToRoute('view_cart');
-                }
 
                 $orderItem = new OrderItem();
                 $orderItem->setProduct($product);
@@ -58,9 +55,6 @@ class OrderController extends AbstractController
                 $orderItem->setSubtotal($item['price'] * $item['quantity']);
 
                 $order->addItem($orderItem);
-
-                // ⭐ Reduce stock
-                $product->setStock($product->getStock() - $item['quantity']);
             }
 
             $em->persist($order);
@@ -71,7 +65,7 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('checkout_success');
         }
 
-        return $this->render('checkout.html.twig', [
+        return $this->render('cart/checkout.html.twig', [
             'cart' => $cart,
             'total' => $total,
         ]);
@@ -84,9 +78,10 @@ class OrderController extends AbstractController
     }
 
     #[Route('/my-orders', name: 'my_orders')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function myOrders(EntityManagerInterface $em): Response
     {
-        $orders = $em->getRepository(Order::class)->findBy([], ['createdAt' => 'DESC']);
+        $orders = $em->getRepository(Order::class)->findBy(['createdBy' => $this->getUser()], ['createdAt' => 'DESC']);
 
         return $this->render('order/index.html.twig', [
             'orders' => $orders,

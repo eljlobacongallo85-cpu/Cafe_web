@@ -1,38 +1,110 @@
 {% extends 'base.html.twig' %}
-{% block title %}Welcome to Jelo's Café{% endblock %}
+{% block title %}Choose your next sip{% endblock %}
+
 {% block body %}
-<div class="text-center p-5 bg-light rounded shadow-sm">
-    <h1 class="display-4">Welcome to Jelo's Café</h1>
-    <p class="lead">Freshly brewed coffee & homemade pastries every day ☕🍰</p>
-    <a href="{{ path('menu') }}" class="btn btn-primary btn-lg mt-3">See Our Menu</a>
+<style>
+    .landing-hero {
+        border-radius: 28px;
+        padding: 3rem 2rem;
+        background-image: linear-gradient(135deg, rgba(75,46,5,.95), rgba(255,214,175,.9)), url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1500&q=80');
+        background-size: cover;
+        background-position: center;
+        box-shadow: 0 30px 60px rgba(75, 46, 5, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
 
-</div>
+    .hero-pill {
+        letter-spacing: 0.25em;
+        font-size: 0.75rem;
+        padding: 0.45rem 1.2rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.15);
+        text-transform: uppercase;
+    }
 
-<div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <img src="https://www.royalcupcoffee.com/sites/default/files/images/blog/AdobeStock_159183621update.jpg"
-                 class="card-img-top img-fluid"
-                 alt="coffee"
-                 style="height:250px; object-fit:cover;">
+    .value-card {
+        border-radius: 22px;
+        border: 1px solid rgba(75, 46, 5, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: #fff;
+        min-height: 280px;
+    }
+
+    .value-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .value-card .badge-pill {
+        letter-spacing: 0.2em;
+    }
+
+    .experience-note {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4em;
+        color: rgba(75, 46, 5, 0.6);
+    }
+</style>
+
+<section class="landing-hero text-white">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <span class="hero-pill mb-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-geo-alt-fill"></i>
+                Neighborhood roastery
+            </span>
+            <h1 class="display-5 fw-bold mb-3">Choose your next sip</h1>
+            <p class="lead text-white-75 mb-4">No more long scrolls - each highlight on this page opens a dedicated story. Click a button to land on the page that interests you.</p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="{{ path('menu') }}" class="btn btn-warning btn-lg shadow">View the menu</a>
+                <a href="{{ path('contact') }}#contact-form" class="btn btn-outline-light btn-lg">Reserve a visit</a>
+            </div>
+        </div>
+        <div class="col-lg-5 mt-4 mt-lg-0 text-lg-end">
+            <p class="experience-note mb-2">Fresh batch drops</p>
+            <p class="h3 fw-semibold mb-2">7:00 AM</p>
+            <p class="text-white-75">Every roast is cupped, scored, and shared live with the crew before doors open.</p>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <img src="https://www.upmenu.com/wp-content/uploads/2022/08/Small-Cafe-Interior-Design.jpg"
-                 class="card-img-top img-fluid"
-                 alt="cafe"
-                 style="height:250px; object-fit:cover;">
+</section>
+
+<section class="mt-5">
+    <div class="d-flex justify-content-between align-items-end mb-3 flex-column flex-md-row gap-3">
+        <div>
+            <h2 class="h3 mb-1">Pick an experience</h2>
+            <p class="text-muted mb-0">Each card leads to its own page - read more, linger, then click again.</p>
         </div>
+        <a href="{{ path('contact') }}" class="btn btn-sm btn-outline-secondary">Need guidance?</a>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <img src="https://ocakes.in/storage/app/public/images/item/item-642f5b5885a38.jpg"
-                 class="card-img-top img-fluid"
-                 alt="pastry"
-                 style="height:250px; object-fit:cover;">
-        </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
+        {% set experienceCards = [
+            { title: 'Craft Roasts', tagline: 'Roastery', description: 'Small-batch beans roasted in-house, with tasting notes pinned weekly.', route: 'experience_craft', button: 'Explore roasts', accent: 'warning' },
+            { title: 'Pastries & Bakes', tagline: 'Bakery', description: 'Collabs with local bakers deliver laminated favorites and seasonal tarts.', route: 'experience_pastries', button: 'Savor pastries', accent: 'secondary' },
+            { title: 'Gatherings & Events', tagline: 'Community', description: 'Book the long table, join acoustic nights, or host a tasting menu.', route: 'experience_gatherings', button: 'Plan a gathering', accent: 'primary' },
+            { title: 'Brew Bar Rituals', tagline: 'Brews', description: 'Manual brews, steeped cold taps, and flight tastings to decode each origin.', route: 'experience_brew', button: 'Meet the brew bar', accent: 'info' }
+        ] %}
+
+        {% for experience in experienceCards %}
+            <div class="col">
+                <article class="value-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <span class="badge bg-{{ experience.accent }} bg-opacity-10 text-{{ experience.accent }} badge-pill mb-3">{{ experience.tagline }}</span>
+                        <h3 class="h5 mb-3">{{ experience.title }}</h3>
+                        <p class="text-muted mb-4">{{ experience.description }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ path(experience.route) }}" class="btn btn-outline-{{ experience.accent }} btn-sm">{{ experience.button }}</a>
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
     </div>
-</div>
-    
+</section>
+
+<section class="mt-5 text-center">
+    <p class="text-muted">Every button opens a new page so you can dive deeply without scrolling through the entire page.</p>
+</section>
 {% endblock %}

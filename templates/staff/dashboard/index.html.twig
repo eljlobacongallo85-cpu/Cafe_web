@@ -1,4 +1,4 @@
-{% extends 'base_admin.html.twig' %}
+﻿{% extends 'base_admin.html.twig' %}
 
 {% block title %}Staff Dashboard{% endblock %}
 
@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block subheader %}
-    Staff Dashboard — limited access
+    Staff Dashboard - limited access
 {% endblock %}
 
 {% block body %}
@@ -45,7 +45,7 @@
                 </div>
                 <div>
                     <div class="text-muted small">Orders Created</div>
-                    <div class="fs-3 fw-bold">{{ totalOrders }}</div>
+                    <div id="staffTotalOrders" class="fs-3 fw-bold">{{ totalOrders }}</div>
                 </div>
             </div>
         </div>
@@ -57,10 +57,13 @@
     <div class="card-header bg-white fw-semibold">
         <i class="bi bi-clock-history me-1"></i>
         Recent Orders
+        <span class="text-muted fw-normal ms-2" style="font-size:.9rem;">
+            (auto-refresh)
+        </span>
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+        <table id="staffRecentOrdersTable" class="table table-hover mb-0 align-middle" data-feed-url="{{ path('admin_order_feed') }}">
             <thead class="table-light">
                 <tr>
                     <th>#</th>
@@ -76,7 +79,7 @@
                             ₱{{ order.totalPrice|number_format(2) }}
                         </td>
                         <td class="text-muted">
-                            {{ order.createdAt|date('M d, Y · H:i') }}
+                            {{ order.createdAt|date('M d, Y &middot; H:i')|raw }}
                         </td>
                     </tr>
                 {% else %}
@@ -92,4 +95,73 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block javascripts %}
+<script>
+  (function () {
+    const tableEl = document.getElementById('staffRecentOrdersTable');
+    if (!tableEl) return;
+
+    const feedUrl = tableEl.getAttribute('data-feed-url');
+    const tbody = tableEl.querySelector('tbody');
+    const totalEl = document.getElementById('staffTotalOrders');
+
+    const fmtMoney = (value) => `₱${Number(value || 0).toFixed(2)}`;
+    const fmtDate = (iso) => {
+      try {
+        return iso ? new Date(iso).toLocaleString() : '-';
+      } catch (e) {
+        return '-';
+      }
+    };
+
+    let isRefreshing = false;
+    let lastTopId = null;
+
+    async function refresh() {
+      if (!feedUrl || !tbody || isRefreshing) return;
+      isRefreshing = true;
+      try {
+        const res = await fetch(feedUrl, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data || data.ok !== true || !Array.isArray(data.orders)) return;
+
+        const orders = data.orders;
+        const topId = orders[0]?.id ?? null;
+        if (lastTopId !== null && topId === lastTopId) return;
+        lastTopId = topId;
+
+        const recent = orders.slice(0, 10);
+        tbody.innerHTML = recent.length
+          ? recent.map((o) => `
+              <tr>
+                <td class="fw-semibold">#${o.id ?? ''}</td>
+                <td class="fw-bold text-success">${fmtMoney(o.totalPrice)}</td>
+                <td class="text-muted">${fmtDate(o.createdAt)}</td>
+              </tr>
+            `).join('')
+          : `
+              <tr>
+                <td colspan="3" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                  No orders yet
+                </td>
+              </tr>
+            `;
+
+        if (totalEl) {
+          totalEl.textContent = String(data.totalCount ?? orders.length);
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 8000);
+  })();
+</script>
 {% endblock %}

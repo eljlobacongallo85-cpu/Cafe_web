@@ -1,0 +1,41 @@
+$kind: http-request
+name: 'Auth / Register'
+url: '{{baseUrl}}/api/register'
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{registerEmail}}",
+      "password": "{{registerPassword}}",
+      "username": "{{registerUsername}}",
+      "name": "{{registerName}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Registration returns 201", function () {
+        pm.response.to.have.status(201);
+      });
+
+      pm.test("Registration response has expected shape", function () {
+        const json = pm.response.json();
+
+        pm.expect(json).to.be.an("object");
+        pm.expect(json.ok).to.eql(true);
+        pm.expect(json.message).to.be.a("string");
+        pm.expect(json.verify_url).to.be.a("string");
+        pm.expect(json.user).to.be.an("object");
+
+        pm.expect(json.user.id).to.exist;
+        pm.expect(json.user.username).to.be.a("string");
+        pm.expect(json.user.email).to.be.a("string");
+        pm.expect(json.user.verified).to.be.a("boolean");
+        pm.expect(json.user.roles).to.be.an("array");
+        pm.expect(json.user.name).to.be.a("string");
+      });
+order: 2000

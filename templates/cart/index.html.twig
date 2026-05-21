@@ -1,62 +1,71 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
-{% block title %}Your Cart – Jelo's Café{% endblock %}
+{% block title %}Your Cart - Jelo's Cafe{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">🛍 Your Cart</h2>
+<section class="gradient-hero mb-5 text-white">
+    <p class="section-subtitle text-white-75">Order in progress</p>
+    <h1 class="display-4 fw-bold mb-3">Your cart</h1>
+    <p class="lead text-white-75 mb-0">Keep your favorites warm while you add more sips or pastries - checkout when ready.</p>
+</section>
 
+<section class="page-section">
     {% if cart is empty %}
-        <div class="alert alert-info text-center">
-            Your cart is empty. <a href="{{ path('menu') }}">Go back to menu</a>.
+        <div class="text-center py-5">
+            <div class="display-6 mb-3">&#128717;</div>
+            <h3 class="fw-semibold mb-2">Your cart is empty</h3>
+            <p class="text-muted mb-4">Add a latte, espresso, or pastry to secure a pickup time.</p>
+            <a href="{{ path('menu') }}" class="btn btn-warning btn-lg">Browse the menu</a>
         </div>
     {% else %}
-        <table class="table table-bordered shadow-sm align-middle">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for id, item in cart %}
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="text-muted text-uppercase small">
                     <tr>
-                        <td>{{ item.name }}</td>
-                        <td>₱{{ item.price }}</td>
-                        <td class="text-center">
-                            <a href="{{ path('cart_decrease', {id: id}) }}" class="btn btn-sm btn-outline-secondary">➖</a>
-                            <span class="mx-2">{{ item.quantity }}</span>
-                            <a href="{{ path('cart_increase', {id: id}) }}" class="btn btn-sm btn-outline-secondary">➕</a>
-                        </td>
-                        <td>₱{{ item.price * item.quantity }}</td>
-                        <td class="text-center">
-                            <a href="{{ path('cart_remove', {id: id}) }}" class="btn btn-sm btn-danger"
-                               onclick="return confirm('Remove {{ item.name }} from your cart?');">
-                                🗑 Remove
-                            </a>
-                        </td>
+                        <th scope="col">Item</th>
+                        <th scope="col" class="text-end">Price</th>
+                        <th scope="col" class="text-center">Quantity</th>
+                        <th scope="col" class="text-end">Subtotal</th>
+                        <th scope="col" class="text-center">Actions</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="fw-bold">
-                <tr>
-                    <td colspan="3" class="text-end">Total:</td>
-                    <td colspan="2">₱{{ total }}</td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <div class="d-flex justify-content-between mt-3">
-            <a href="{{ path('menu') }}" class="btn btn-outline-primary">⬅ Continue Shopping</a>
-            <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger"
-               onclick="return confirm('Are you sure you want to clear your cart?');">
-                🗑 Clear Cart
-            </a>
-            <a href="{{ path('checkout') }}" class="btn btn-success">✅ Proceed to Checkout</a>
+                </thead>
+                <tbody>
+                    {% for id, item in cart %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ item.name }}</div>
+                                <p class="text-muted mb-0">{{ item.category|default('Cafe order') }}</p>
+                            </td>
+                            <td class="text-end">&#8369;{{ item.price|number_format(2, '.', ',') }}</td>
+                            <td class="text-center">
+                                <a href="{{ path('cart_decrease', {id: id}) }}" class="btn btn-sm btn-outline-secondary">-</a>
+                                <span class="mx-2 fw-semibold">{{ item.quantity }}</span>
+                                <a href="{{ path('cart_increase', {id: id}) }}" class="btn btn-sm btn-outline-secondary">+</a>
+                            </td>
+                            <td class="text-end">&#8369;{{ (item.price * item.quantity)|number_format(2, '.', ',') }}</td>
+                            <td class="text-center">
+                                <a href="{{ path('cart_remove', {id: id}) }}" class="btn btn-sm btn-danger">Remove</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="fw-bold border-top">
+                    <tr>
+                        <td colspan="3" class="text-end">Total</td>
+                        <td class="text-end">&#8369;{{ total|number_format(2, '.', ',') }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mt-4">
+            <div class="text-muted">Need to adjust anything? Tap the buttons beside each item.</div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ path('menu') }}" class="btn btn-outline-secondary">Continue shopping</a>
+                <a href="{{ path('cart_clear') }}" class="btn btn-outline-danger" onclick="return confirm('Clear the cart?');">Clear cart</a>
+                <a href="{{ path('checkout') }}" class="btn btn-warning">Proceed to checkout</a>
+            </div>
         </div>
     {% endif %}
-</div>
+</section>
 {% endblock %}

@@ -1,0 +1,41 @@
+$kind: http-request
+name: Auth / Register
+url: '{{baseUrl}}/api/register'
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{registerEmail}}",
+      "username": "{{registerUsername}}",
+      "password": "{{registerPassword}}",
+      "name": "{{registerName}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Register returns 200-201', () => {
+        pm.expect(pm.response.code).to.be.oneOf([200, 201]);
+      });
+
+      pm.test('Response is JSON', () => {
+        pm.response.to.be.json;
+      });
+
+      let data = {};
+      try { data = pm.response.json(); } catch (e) {}
+
+      const token = data.token || data.access_token;
+      if (token) {
+        pm.environment.set('staffToken', token);
+      }
+
+      const userId = data.user?.id ?? data.id ?? data.user_id;
+      if (userId !== undefined && userId !== null) {
+        pm.environment.set('registeredUserId', String(userId));
+      }
+order: 2000

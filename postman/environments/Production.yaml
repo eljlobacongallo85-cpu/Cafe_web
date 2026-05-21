@@ -1,0 +1,6 @@
+name: Production
+values:
+  - key: baseUrl
+    value: 'https://cafe.example.com'
+    enabled: true
+    type: default

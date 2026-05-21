@@ -1,0 +1,22 @@
+$kind: http-request
+name: Auth / Login (Staff)
+url: "{{baseUrl}}/api/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "identifier": "{{staffUsername}}",
+      "password": "{{staffPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Login returns 200", () => pm.response.to.have.status(200));
+
+      pm.test("Response identifies staff", () =>
+      pm.expect(pm.response.json().user.roles).to.include("ROLE_STAFF"));
+    language: text/javascript
+order: 1000

@@ -1,0 +1,14 @@
+$kind: http-request
+name: Products / Catalog
+url: "{{baseUrl}}/api/products"
+method: GET
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Product catalog is available", () =>
+      pm.response.to.have.status(200));
+
+      pm.test("Body contains products", () =>
+      pm.expect(pm.response.json().products).to.be.an("array"));
+    language: text/javascript
+order: 2000

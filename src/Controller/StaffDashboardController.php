@@ -20,14 +20,13 @@ class StaffDashboardController extends AbstractController
     ): Response {
         $user = $this->getUser();
 
-        // Staff can only see THEIR OWN records
         $products = $productRepository->findBy(['createdBy' => $user]);
-        $orders   = $orderRepository->findBy(['createdBy' => $user]);
+        $orders   = $orderRepository->findBy([], ['createdAt' => 'DESC'], 10);
 
         return $this->render('staff/dashboard/index.html.twig', [
             'user'          => $user,
             'totalProducts' => count($products),
-            'totalOrders'   => count($orders),
+            'totalOrders'   => $orderRepository->count([]),
             'products'      => $products,
             'orders'        => $orders,
         ]);

@@ -3,9 +3,27 @@
 {% block header %}Customer Orders{% endblock %}
 
 {% block body %}
+<div class="alert alert-info d-flex align-items-center justify-content-between gap-3">
+    <div>
+        <i class="bi bi-broadcast me-1"></i>
+        Live updates enabled (auto-refresh every <strong>8s</strong>).
+    </div>
+    <button id="ordersRefreshBtn" type="button" class="btn btn-sm btn-outline-primary">
+        Refresh now
+    </button>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body">
-        <table id="orderTable" class="table table-striped table-hover align-middle">
+        <table
+            id="orderTable"
+            class="table table-striped table-hover align-middle"
+            data-feed-url="{{ path('admin_order_feed') }}"
+            data-show-url-template="{{ path('admin_order_show', { id: 'ORDER_ID' }) }}"
+            {% if is_granted('ROLE_ADMIN') %}
+                data-delete-url-template="{{ path('admin_order_delete', { id: 'ORDER_ID' }) }}"
+            {% endif %}
+        >
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
@@ -50,15 +68,88 @@
 {% endblock %}
 
 {% block javascripts %}
-    {% if orders is not empty %}
-        <script>
-            $(document).ready(function() {
-                $('#orderTable').DataTable({
-                    pageLength: 10,
-                    lengthMenu: [10, 25, 50],
-                    ordering: true
-                });
-            });
-        </script>
-    {% endif %}
+<script>
+  $(document).ready(function () {
+    const tableEl = document.getElementById('orderTable');
+    if (!tableEl) return;
+
+    const feedUrl = tableEl.getAttribute('data-feed-url');
+    const showUrlTemplate = tableEl.getAttribute('data-show-url-template') || '';
+    const deleteUrlTemplate = tableEl.getAttribute('data-delete-url-template') || '';
+    const isAdmin = !!deleteUrlTemplate;
+
+    const dt = $('#orderTable').DataTable({
+      pageLength: 10,
+      lengthMenu: [10, 25, 50],
+      ordering: true,
+    });
+
+    const fmtMoney = (value) => `₱${Number(value || 0).toFixed(2)}`;
+    const fmtDate = (iso) => {
+      try {
+        return iso ? new Date(iso).toLocaleString() : '-';
+      } catch (e) {
+        return '-';
+      }
+    };
+
+    const buildActions = (id) => {
+      const showUrl = showUrlTemplate.replace('ORDER_ID', String(id));
+      let html = `
+        <a href="${showUrl}" class="btn btn-sm btn-info text-white">
+          <i class="bi bi-eye"></i>
+        </a>
+      `;
+      if (isAdmin) {
+        const deleteUrl = deleteUrlTemplate.replace('ORDER_ID', String(id));
+        html += `
+          <a href="${deleteUrl}" class="btn btn-sm btn-danger" onclick="return confirm('Delete order?');">
+            <i class="bi bi-trash"></i>
+          </a>
+        `;
+      }
+      return html;
+    };
+
+    let isRefreshing = false;
+    let lastTopId = null;
+
+    async function refreshOrders({ silent = false } = {}) {
+      if (!feedUrl || isRefreshing) return;
+      isRefreshing = true;
+      try {
+        const res = await fetch(feedUrl, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data || data.ok !== true || !Array.isArray(data.orders)) return;
+
+        const orders = data.orders;
+        const topId = orders[0]?.id ?? null;
+        if (silent && lastTopId !== null && topId === lastTopId) return;
+        lastTopId = topId;
+
+        const rows = orders.map((o) => ([
+          String(o.id ?? ''),
+          String(o.customerName ?? ''),
+          fmtMoney(o.totalPrice),
+          fmtDate(o.createdAt),
+          `<div class="text-end">${buildActions(o.id)}</div>`,
+        ]));
+
+        dt.clear();
+        dt.rows.add(rows).draw(false);
+      } catch (e) {
+        // ignore (network / parsing)
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    document.getElementById('ordersRefreshBtn')?.addEventListener('click', () => {
+      refreshOrders({ silent: false });
+    });
+
+    refreshOrders({ silent: false });
+    setInterval(() => refreshOrders({ silent: true }), 8000);
+  });
+</script>
 {% endblock %}

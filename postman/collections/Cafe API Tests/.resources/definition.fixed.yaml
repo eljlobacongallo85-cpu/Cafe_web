@@ -1,0 +1,3 @@
+$kind: collection
+name: 'Cafe API Tests'
+description: 'Minimal collection covering the rubric''s API requirements: login, catalog, staff order listing, and order creation.'

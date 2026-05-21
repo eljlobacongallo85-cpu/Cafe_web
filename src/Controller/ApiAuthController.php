@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ApiAuthController extends AbstractController
 {
@@ -17,6 +18,7 @@ class ApiAuthController extends AbstractController
     public function login(
         Request $request,
         UserRepository $users,
+        EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
@@ -53,6 +55,13 @@ class ApiAuthController extends AbstractController
             ], 401);
         }
 
+        if (method_exists($user, 'isVerified') && !$user->isVerified()) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Email not verified.',
+            ], 403);
+        }
+
         if (method_exists($user, 'isActive') && !$user->isActive()) {
             return new JsonResponse([
                 'ok' => false,
@@ -60,15 +69,43 @@ class ApiAuthController extends AbstractController
             ], 403);
         }
 
+        $plainToken = bin2hex(random_bytes(32));
+        $user->setApiTokenHash(hash('sha256', $plainToken));
+        $user->setApiTokenCreatedAt(new \DateTimeImmutable());
+        $em->persist($user);
+        $em->flush();
+
         return new JsonResponse([
             'ok' => true,
             'user' => [
                 'id' => $user->getId(),
                 'username' => $user->getUserIdentifier(),
                 'email' => $user->getEmail(),
+                'verified' => method_exists($user, 'isVerified') ? $user->isVerified() : true,
                 'roles' => $user->getRoles(),
                 'name' => $user->getName(),
             ],
+            'token' => $plainToken,
+        ]);
+    }
+
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function logout(EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
+        if ($user && method_exists($user, 'setApiTokenHash')) {
+            $user->setApiTokenHash(null);
+            if (method_exists($user, 'setApiTokenCreatedAt')) {
+                $user->setApiTokenCreatedAt(null);
+            }
+            $em->persist($user);
+            $em->flush();
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'message' => 'Logged out.',
         ]);
     }
 
@@ -77,7 +114,8 @@ class ApiAuthController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserRepository $users,
-        UserPasswordHasherInterface $hasher
+        UserPasswordHasherInterface $hasher,
+        \App\Service\EmailVerificationService $verification
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -130,17 +168,40 @@ class ApiAuthController extends AbstractController
         $user->setUsername($username);
         $user->setEmail($email);
         $user->setName($name);
+        $user->setRoles(['ROLE_CUSTOMER']);
         $user->setPassword($hasher->hashPassword($user, $password));
+        if (method_exists($user, 'setVerified')) {
+            $user->setVerified(false);
+        }
 
-        $em->persist($user);
-        $em->flush();
+        $connection = $em->getConnection();
+        $connection->beginTransaction();
+
+        try {
+            $em->persist($user);
+            $em->flush();
+
+            $verification->startVerification($user);
+
+            $connection->commit();
+        } catch (\Throwable $exception) {
+            $connection->rollBack();
+            $em->clear();
+
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Unable to send the verification email. Please try again later.',
+            ], 500);
+        }
 
         return new JsonResponse([
             'ok' => true,
+            'message' => 'Registration successful. Please check your email for the verification link.',
             'user' => [
                 'id' => $user->getId(),
                 'username' => $user->getUserIdentifier(),
                 'email' => $user->getEmail(),
+                'verified' => method_exists($user, 'isVerified') ? $user->isVerified() : true,
                 'roles' => $user->getRoles(),
                 'name' => $user->getName(),
             ],

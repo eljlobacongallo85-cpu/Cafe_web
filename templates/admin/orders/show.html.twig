@@ -1,4 +1,4 @@
-{% extends 'base_admin.html.twig' %}
+﻿{% extends 'base_admin.html.twig' %}
 {% block title %}Order #{{ order.id }}{% endblock %}
 {% block header %}Order #{{ order.id }}{% endblock %}
 
@@ -10,11 +10,11 @@
                 <h6>Customer</h6>
                 <p><strong>{{ order.customerName }}</strong><br>{{ order.contact }}</p>
                 <h6>Notes</h6>
-                <p>{{ order.notes|default('—') }}</p>
+                <p>{{ order.notes|default('&mdash;')|raw }}</p>
             </div>
         </div>
 
-        <a href="{{ path('admin_order_index') }}" class="btn btn-outline-secondary">← Back to orders</a>
+        <a href="{{ path('admin_order_index') }}" class="btn btn-outline-secondary">&larr; Back to orders</a>
         {% if is_granted('ROLE_ADMIN') %}
             <a href="{{ path('admin_order_delete',{id:order.id}) }}" class="btn btn-danger" onclick="return confirm('Delete this order?');">Delete</a>
         {% endif %}

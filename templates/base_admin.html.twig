@@ -14,13 +14,15 @@
         :root{
             --coffee:#4b2e05;
             --accent:#ffce7a;
-            --bg:#fffdf8;
+            --bg:#fdf9f3;
             --muted:#d1c6b3;
+            --paper:#ffffff;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(180deg,#f8f5f2 0%, #fbfaf9 100%);
+            background-color: var(--bg);
+            color: #2f1f13;
             margin:0;
             display:flex;
             min-height:100vh;
@@ -29,7 +31,7 @@
         /* Sidebar */
         .sidebar {
             width:260px;
-            background:var(--coffee);
+            background: linear-gradient(135deg, rgba(78, 45, 7, 0.95), rgba(62, 31, 2, 0.95));
             color:#fff;
             position:fixed;
             top:0; left:0;
@@ -37,34 +39,41 @@
             padding:18px 12px;
             display:flex;
             flex-direction:column;
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .brand {
             text-align:center;
             margin-bottom:16px;
+            padding-bottom:14px;
+            border-bottom:1px solid rgba(255, 255, 255, 0.18);
         }
 
         .brand h4 {
-            color:var(--accent);
+            color:#fff;
             font-weight:700;
             margin:0;
         }
 
-        .nav-link {
+        .sidebar .nav-link {
             color:#fff;
             margin:6px 6px;
-            border-radius:8px;
+            border-radius:14px;
             padding:10px 12px;
             display:flex;
             gap:10px;
             align-items:center;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            transition: background .2s ease, transform .2s ease;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background:var(--accent);
-            color:var(--coffee)!important;
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 217, 123, 0.95);
+            color: #2f1f13 !important;
             font-weight:600;
+            transform: translateY(-1px);
         }
 
         .small-muted {
@@ -77,7 +86,7 @@
             margin-left:260px;
             padding:28px;
             flex:1;
-            background:var(--bg);
+            background: transparent;
         }
 
         .topbar {
@@ -85,6 +94,66 @@
             justify-content:space-between;
             align-items:center;
             margin-bottom:18px;
+            padding: 18px 22px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, rgba(75, 46, 5, 0.92), rgba(255, 214, 175, 0.92));
+            color: #fff;
+            box-shadow: 0 28px 55px rgba(39, 18, 4, 0.18);
+        }
+
+        .topbar h2 {
+            font-weight:700;
+            letter-spacing:0.4px;
+        }
+
+        .admin-page {
+            background: var(--paper);
+            border-radius: 28px;
+            padding: 2.25rem;
+            box-shadow: 0 35px 65px rgba(67, 35, 9, 0.08);
+            border: 1px solid rgba(75, 46, 5, 0.08);
+        }
+
+        .flash-message {
+            margin-bottom: 1rem;
+        }
+
+        .btn-coffee{
+            background: var(--coffee);
+            color:#fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            padding: .55rem 1rem;
+        }
+
+        .btn-coffee:hover{
+            background: #3a2404;
+            color:#fff;
+        }
+
+        .btn-outline-coffee{
+            background: transparent;
+            color: var(--coffee);
+            border: 1px solid rgba(75, 46, 5, 0.35);
+            border-radius: 14px;
+            padding: .55rem 1rem;
+        }
+
+        .btn-outline-coffee:hover{
+            background: rgba(255, 217, 123, 0.35);
+            color: #2f1f13;
+            border-color: rgba(75, 46, 5, 0.35);
+        }
+
+        .card,
+        .card-compact{
+            border-radius: 22px;
+            border: 1px solid rgba(75, 46, 5, 0.08);
+        }
+
+        .card-compact{
+            background: #fff;
+            box-shadow: 0 22px 40px rgba(67, 35, 9, 0.08);
         }
 
         @media (max-width:900px){
@@ -99,8 +168,12 @@
         }
 
         table.dataTable thead th {
-            background:#3a3a3a;
+            background: rgba(75, 46, 5, 0.92);
             color:#fff;
+        }
+
+        .table-dark{
+            --bs-table-bg: rgba(75, 46, 5, 0.92);
         }
     </style>
 
@@ -188,18 +261,28 @@
     <div class="topbar">
         <div>
             <h2 class="m-0">{% block header %}{% endblock %}</h2>
-            <div class="text-muted">{% block subheader %}{% endblock %}</div>
+            <div class="text-white-50">{% block subheader %}{% endblock %}</div>
         </div>
 
         {% if app.user %}
             <div class="text-end">
                 <div class="fw-semibold">{{ app.user.username }}</div>
-                <div class="text-muted small">{{ app.user.email }}</div>
+                <div class="text-white-50 small">{{ app.user.email }}</div>
             </div>
         {% endif %}
     </div>
 
-    {% block body %}{% endblock %}
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type }} flash-message text-center shadow-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="admin-page">
+        {% block body %}{% endblock %}
+    </div>
 </main>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

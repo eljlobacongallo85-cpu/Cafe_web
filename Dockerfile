@@ -1,40 +1,63 @@
-FROM composer:2 AS vendor
+FROM php:8.3-fpm as builder
+
 WORKDIR /app
-COPY composer.json composer.lock symfony.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
-
-FROM php:8.2-apache
-
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
-    && a2enmod mpm_prefork rewrite headers
 
 RUN apt-get update && apt-get install -y \
-    git unzip libicu-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql intl zip \
+    git \
+    unzip \
+    curl \
+    nodejs \
+    npm \
+    && docker-php-ext-install pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
+COPY composer.json composer.lock ./
 
-WORKDIR /var/www/html
+RUN composer install --no-interaction --no-scripts --optimize-autoloader
 
-# App code + dependencies
-COPY --from=vendor /app/vendor ./vendor
-COPY --from=vendor /usr/bin/composer /usr/bin/composer
 COPY . .
 
-# Use our Symfony-friendly vhost
-COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+RUN if [ ! -f /app/.env ]; then echo "APP_ENV=${APP_ENV:-prod}\nAPP_DEBUG=${APP_DEBUG:-false}\nAPP_SECRET=${APP_SECRET:-ChangeMe}\n" > /app/.env; fi
 
-RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction \
-    && mkdir -p var \
-    && chown -R www-data:www-data var
+# Now run post-install scripts after app code is available
+RUN composer install --no-interaction --optimize-autoloader --no-ansi || true
+RUN php bin/console importmap:install --no-interaction
 
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN php bin/console cache:warmup --env=prod --no-debug || true
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["apache2-foreground"]
+FROM php:8.3-fpm as runtime
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    nginx \
+    curl \
+    gettext-base \
+    && docker-php-ext-install pdo pdo_mysql \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app /app
+
+RUN mkdir -p /app/var && \
+    chown -R www-data:www-data /app && \
+    chmod -R 755 /app && \
+    chmod -R 775 /app/var
+
+COPY nginx-main.conf /etc/nginx/nginx.conf
+
+RUN rm -rf /etc/nginx/conf.d/* /etc/nginx/sites-enabled /etc/nginx/sites-available
+COPY nginx.conf /etc/nginx/conf.d/symfony.conf
+
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

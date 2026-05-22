@@ -13,35 +13,104 @@
         :root{
             --coffee:#4b2e05;
             --coffee-light:#6d4415;
-            --bg:#f8f5f2;
+            --cream:#fff7ee;
+            --strawberry:#ff4d7d;
+            --matcha:#3a8f6a;
+            --choco:#3b240c;
         }
 
         body {
-            background: linear-gradient(180deg, #f8f5f2 0%, #fffaf3 100%);
+            background:
+                radial-gradient(900px 500px at 10% 10%, rgba(255,77,125,.14), transparent 60%),
+                radial-gradient(900px 500px at 90% 20%, rgba(58,143,106,.12), transparent 60%),
+                radial-gradient(800px 480px at 40% 90%, rgba(75,46,5,.10), transparent 55%),
+                linear-gradient(180deg, #fffaf3 0%, var(--cream) 100%);
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
             display:flex;
             align-items:center;
             justify-content:center;
+            overflow-x:hidden;
         }
 
         .login-wrapper {
             width: 100%;
-            max-width: 420px;
-            padding: 16px;
+            max-width: 960px;
+            padding: 18px;
         }
 
-        .login-card {
+        .login-shell {
             background: #fff;
-            border-radius: 16px;
-            padding: 32px 28px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.12);
+            border-radius: 22px;
+            box-shadow: 0 18px 55px rgba(0,0,0,.14);
             animation: fadeIn .6s ease;
+            overflow:hidden;
+            border: 1px solid rgba(75,46,5,.08);
         }
 
         @keyframes fadeIn {
             from { opacity:0; transform: translateY(15px); }
             to { opacity:1; transform: translateY(0); }
+        }
+
+        .panel {
+            padding: 34px 30px;
+        }
+
+        .pastry-panel {
+            position: relative;
+            background:
+                radial-gradient(260px 220px at 15% 20%, rgba(255,77,125,.22), transparent 65%),
+                radial-gradient(260px 220px at 80% 25%, rgba(58,143,106,.20), transparent 65%),
+                radial-gradient(260px 220px at 55% 85%, rgba(75,46,5,.14), transparent 70%),
+                linear-gradient(180deg, #fff 0%, #fff9f1 100%);
+        }
+
+        .sprinkles {
+            position:absolute;
+            inset: 0;
+            pointer-events:none;
+            opacity: .55;
+            background-image:
+                radial-gradient(circle at 20px 24px, rgba(255,77,125,.55) 0 2px, transparent 3px),
+                radial-gradient(circle at 110px 72px, rgba(58,143,106,.55) 0 2px, transparent 3px),
+                radial-gradient(circle at 66px 130px, rgba(255,196,0,.55) 0 2px, transparent 3px),
+                radial-gradient(circle at 180px 50px, rgba(75,46,5,.45) 0 2px, transparent 3px),
+                radial-gradient(circle at 210px 140px, rgba(255,77,125,.45) 0 2px, transparent 3px),
+                radial-gradient(circle at 40px 190px, rgba(58,143,106,.45) 0 2px, transparent 3px);
+            background-size: 240px 220px;
+        }
+
+        .pastry-badge {
+            display:inline-flex;
+            align-items:center;
+            gap:.55rem;
+            padding: .55rem .8rem;
+            border-radius: 999px;
+            background: rgba(255,255,255,.75);
+            border: 1px solid rgba(75,46,5,.10);
+            backdrop-filter: blur(6px);
+            font-weight: 600;
+            color: var(--choco);
+        }
+
+        .pastry-title {
+            margin-top: 14px;
+            font-weight: 800;
+            color: var(--choco);
+            letter-spacing: .2px;
+        }
+
+        .pastry-copy {
+            color: rgba(59,36,12,.75);
+            font-size: .95rem;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .hero-cup {
+            margin-top: 22px;
+            max-width: 360px;
         }
 
         .brand {
@@ -101,6 +170,10 @@
             font-weight:600;
             border: 1px solid #ddd;
             background: #fff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:.55rem;
         }
 
         .footer-text {
@@ -109,6 +182,27 @@
             color:#999;
             margin-top:18px;
         }
+
+        .divider {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            color:#8a8a8a;
+            font-size:.82rem;
+            margin: 14px 0 12px;
+        }
+        .divider:before,
+        .divider:after{
+            content:"";
+            height:1px;
+            flex:1;
+            background: rgba(0,0,0,.10);
+        }
+
+        @media (max-width: 991.98px) {
+            .panel { padding: 28px 22px; }
+            .pastry-panel { display:none; }
+        }
     </style>
 </head>
 
@@ -116,7 +210,51 @@
 
 <div class="login-wrapper">
 
-    <div class="login-card">
+    <div class="login-shell">
+        <div class="row g-0">
+            <div class="col-lg-5 pastry-panel">
+                <div class="sprinkles"></div>
+                <div class="panel h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="pastry-badge">
+                            <i class="bi bi-cookie"></i>
+                            Freshly baked vibes
+                        </div>
+                        <h2 class="pastry-title">Welcome back to Jelo’s Cafe</h2>
+                        <div class="pastry-copy">
+                            Log in to order pastries, track your treats, and get served something sweet.
+                        </div>
+                    </div>
+
+                    <svg class="hero-cup" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="cupA" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#ffffff"/>
+                                <stop offset="1" stop-color="#fff0df"/>
+                            </linearGradient>
+                            <linearGradient id="coffeeA" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#6d4415"/>
+                                <stop offset="1" stop-color="#3b240c"/>
+                            </linearGradient>
+                        </defs>
+                        <g fill="none" fill-rule="evenodd">
+                            <path d="M86 246c0 30 68 54 124 54s124-24 124-54H86z" fill="#f3e6da"/>
+                            <path d="M120 88h180l-18 158c-2 18-17 32-35 32H173c-18 0-33-14-35-32L120 88z" fill="url(#cupA)" stroke="rgba(59,36,12,.18)" stroke-width="2"/>
+                            <path d="M136 118h148l-7 62c-2 14-14 25-28 25H171c-14 0-26-11-28-25l-7-62z" fill="url(#coffeeA)"/>
+                            <path d="M302 114c32 2 52 18 52 44 0 29-23 47-60 48" stroke="rgba(59,36,12,.22)" stroke-width="14" stroke-linecap="round"/>
+                            <path d="M298 132c23 2 36 12 36 26 0 16-14 27-42 28" stroke="#fff7ee" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M172 72c14-14 34-14 48 0 14-14 34-14 48 0 14-14 34-14 48 0" stroke="rgba(255,77,125,.55)" stroke-width="10" stroke-linecap="round"/>
+                            <circle cx="158" cy="64" r="5" fill="rgba(255,77,125,.65)"/>
+                            <circle cx="214" cy="54" r="4" fill="rgba(58,143,106,.65)"/>
+                            <circle cx="272" cy="62" r="4.5" fill="rgba(255,196,0,.65)"/>
+                            <circle cx="314" cy="54" r="3.8" fill="rgba(75,46,5,.55)"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="panel">
 
         {% for type, messages in app.flashes %}
             {% for message in messages %}
@@ -133,16 +271,17 @@
         {% endif %}
 
         <div class="brand">
-            <div class="brand-icon">Cafe</div>
+            <div class="brand-icon"><i class="bi bi-cup-hot-fill"></i></div>
             <div class="brand-title">Jelo's Cafe</div>
             <div class="subtitle">Sign in to your account</div>
         </div>
 
         <a href="{{ path('connect_google') }}" class="btn btn-google w-100 mb-3">
-            <i class="bi bi-google me-1"></i> Sign in with Google (Staff)
+            <i class="bi bi-google"></i>
+            Continue with Google
         </a>
 
-        <div class="text-center text-muted small mb-3">or sign in with username/email</div>
+        <div class="divider">or sign in with username/email</div>
 
         <form method="post">
 
@@ -181,6 +320,9 @@
             Copyright {{ "now"|date("Y") }} Jelo's Cafe
         </div>
 
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>

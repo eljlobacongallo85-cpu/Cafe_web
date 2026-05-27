@@ -35,6 +35,11 @@ class OrderController extends AbstractController
             $name = $request->request->get('name');
             $contact = $request->request->get('contact');
             $notes = $request->request->get('notes');
+            $paymentMethod = (string) $request->request->get('payment_method', 'cash');
+            $allowedPaymentMethods = ['cash', 'gcash', 'card'];
+            if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
+                $paymentMethod = 'cash';
+            }
 
             $order = new Order();
             $order->setCustomerName($name);
@@ -43,6 +48,11 @@ class OrderController extends AbstractController
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setTotalPrice($total);
             $order->setCreatedBy($this->getUser());
+            // Simple built-in payment: mark payment as completed when order is placed.
+            $order->setPaymentProvider($paymentMethod);
+            $order->setPaymentSessionId(null);
+            $order->setPaymentStatus(Order::PAYMENT_STATUS_PAID);
+            $order->setPaidAt(new \DateTimeImmutable());
 
             foreach ($cart as $id => $item) {
                 $product = $em->getRepository(Product::class)->find($id);
@@ -62,6 +72,7 @@ class OrderController extends AbstractController
 
             $session->remove('cart');
 
+            $this->addFlash('success', 'Payment received. Your order is confirmed.');
             return $this->redirectToRoute('checkout_success');
         }
 

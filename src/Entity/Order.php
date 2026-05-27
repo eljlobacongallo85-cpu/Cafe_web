@@ -13,6 +13,11 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: '`order`')]
 class Order
 {
+    public const PAYMENT_STATUS_UNPAID = 'unpaid';
+    public const PAYMENT_STATUS_PAID = 'paid';
+    public const PAYMENT_STATUS_FAILED = 'failed';
+    public const PAYMENT_STATUS_REFUNDED = 'refunded';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -29,6 +34,18 @@ class Order
 
     #[ORM\Column]
     private ?float $totalPrice = null;
+
+    #[ORM\Column(length: 32)]
+    private string $paymentStatus = self::PAYMENT_STATUS_UNPAID;
+
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $paymentProvider = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentSessionId = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $paidAt = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -96,6 +113,50 @@ class Order
     public function setTotalPrice(float $totalPrice): static
     {
         $this->totalPrice = $totalPrice;
+        return $this;
+    }
+
+    public function getPaymentStatus(): string
+    {
+        return $this->paymentStatus;
+    }
+
+    public function setPaymentStatus(string $paymentStatus): static
+    {
+        $this->paymentStatus = $paymentStatus;
+        return $this;
+    }
+
+    public function getPaymentProvider(): ?string
+    {
+        return $this->paymentProvider;
+    }
+
+    public function setPaymentProvider(?string $paymentProvider): static
+    {
+        $this->paymentProvider = $paymentProvider;
+        return $this;
+    }
+
+    public function getPaymentSessionId(): ?string
+    {
+        return $this->paymentSessionId;
+    }
+
+    public function setPaymentSessionId(?string $paymentSessionId): static
+    {
+        $this->paymentSessionId = $paymentSessionId;
+        return $this;
+    }
+
+    public function getPaidAt(): ?\DateTimeImmutable
+    {
+        return $this->paidAt;
+    }
+
+    public function setPaidAt(?\DateTimeImmutable $paidAt): static
+    {
+        $this->paidAt = $paidAt;
         return $this;
     }
 

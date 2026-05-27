@@ -121,6 +121,21 @@ class ApiGoogleAuthController extends AbstractController
                 'name' => $user->getName(),
             ],
             'token' => $plainToken,
+            'apiToken' => $plainToken,
+            'accessToken' => $plainToken,
+            'data' => [
+                'user' => [
+                    'id' => $user->getId(),
+                    'username' => $user->getUserIdentifier(),
+                    'email' => $user->getEmail(),
+                    'verified' => method_exists($user, 'isVerified') ? $user->isVerified() : true,
+                    'roles' => $user->getRoles(),
+                    'name' => $user->getName(),
+                ],
+                'token' => $plainToken,
+                'apiToken' => $plainToken,
+                'accessToken' => $plainToken,
+            ],
         ]);
     }
 }

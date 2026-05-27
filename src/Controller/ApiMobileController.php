@@ -60,6 +60,7 @@ class ApiMobileController extends AbstractController
     public function createOrder(
         Request $request,
         ProductRepository $products,
+        OrderRepository $orders,
         EntityManagerInterface $em,
         ActivityLogger $logger
     ): JsonResponse {
@@ -77,6 +78,12 @@ class ApiMobileController extends AbstractController
         }
 
         $user = $this->getUser();
+        if (!$user) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Unauthorized.',
+            ], 401);
+        }
         $customerName = trim((string) ($payload['customerName'] ?? ($user && method_exists($user, 'getName') ? $user->getName() : 'Guest')));
         $contact = trim((string) ($payload['contact'] ?? 'N/A'));
         $notes = trim((string) ($payload['notes'] ?? ''));
@@ -96,6 +103,7 @@ class ApiMobileController extends AbstractController
         $order->setContact($contact ?: 'N/A');
         $order->setNotes($notes !== '' ? $notes : null);
         $order->setCreatedBy($user);
+        $order->setCustomerOrderNo($orders->getNextCustomerOrderNo($user));
         $order->setPaymentProvider($paymentMethod);
         $order->setPaymentSessionId(null);
         $order->setPaymentStatus(Order::PAYMENT_STATUS_PAID);
@@ -199,6 +207,7 @@ class ApiMobileController extends AbstractController
     {
         return [
             'id' => $order->getId(),
+            'customerOrderNo' => $order->getCustomerOrderNo(),
             'customerName' => $order->getCustomerName(),
             'contact' => $order->getContact(),
             'notes' => $order->getNotes(),

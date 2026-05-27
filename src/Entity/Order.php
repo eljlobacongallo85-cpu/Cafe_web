@@ -10,7 +10,12 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
-#[ORM\Table(name: '`order`')]
+#[ORM\Table(
+    name: '`order`',
+    uniqueConstraints: [
+        new ORM\UniqueConstraint(name: 'uniq_order_customer_no_per_user', columns: ['created_by_id', 'customer_order_no'])
+    ]
+)]
 class Order
 {
     public const PAYMENT_STATUS_UNPAID = 'unpaid';
@@ -34,6 +39,9 @@ class Order
 
     #[ORM\Column]
     private ?float $totalPrice = null;
+
+    #[ORM\Column]
+    private ?int $customerOrderNo = null;
 
     #[ORM\Column(length: 32)]
     private string $paymentStatus = self::PAYMENT_STATUS_UNPAID;
@@ -113,6 +121,17 @@ class Order
     public function setTotalPrice(float $totalPrice): static
     {
         $this->totalPrice = $totalPrice;
+        return $this;
+    }
+
+    public function getCustomerOrderNo(): ?int
+    {
+        return $this->customerOrderNo;
+    }
+
+    public function setCustomerOrderNo(int $customerOrderNo): static
+    {
+        $this->customerOrderNo = $customerOrderNo;
         return $this;
     }
 

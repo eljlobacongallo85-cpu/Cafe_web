@@ -60,26 +60,19 @@ class RegistrationController extends AbstractController
                     $user->setRoles(['ROLE_CUSTOMER']);
                     $user->setPassword($hasher->hashPassword($user, $password));
                     if (method_exists($user, 'setVerified')) {
-                        $user->setVerified(false);
+                        // Auto-verify users on registration
+                        $user->setVerified(true);
                     }
-
-                    $connection = $em->getConnection();
-                    $connection->beginTransaction();
 
                     try {
                         $em->persist($user);
                         $em->flush();
 
-                        $verification->startVerification($user);
-
-                        $connection->commit();
-
-                        $this->addFlash('success', 'Registration successful. Please check your email to verify your account.');
+                        $this->addFlash('success', 'Registration successful. You can now log in.');
                         return $this->redirectToRoute('app_login');
                     } catch (\Throwable) {
-                        $connection->rollBack();
                         $em->clear();
-                        $error = 'Unable to send the verification email. Please try again later.';
+                        $error = 'Unable to complete registration. Please try again later.';
                     }
                 }
             }

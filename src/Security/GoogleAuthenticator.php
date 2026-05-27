@@ -85,7 +85,7 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
                     $user->setUsername($candidate);
                     $user->setName(trim($googleName) !== '' ? $googleName : $candidate);
-                    $user->setRoles(['ROLE_CUSTOMER']);
+                    $user->setRoles(['ROLE_USER']);
                     $user->setPassword($this->hasher->hashPassword($user, bin2hex(random_bytes(24))));
                     $user->setVerified(true);
                     $user->setVerificationToken(null);

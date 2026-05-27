@@ -57,6 +57,7 @@ security:
         - { path: ^/register$, roles: PUBLIC_ACCESS }
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/google$, roles: PUBLIC_ACCESS }
         - { path: ^/api/hello$, roles: PUBLIC_ACCESS }
         - { path: ^/api/products, roles: PUBLIC_ACCESS }
         - { path: ^/api/staff, roles: ROLE_STAFF }

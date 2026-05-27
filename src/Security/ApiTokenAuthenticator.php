@@ -23,8 +23,17 @@ class ApiTokenAuthenticator extends AbstractAuthenticator
 
     public function supports(Request $request): ?bool
     {
+        $publicApiPaths = [
+            '/api/login',
+            '/api/register',
+            '/api/hello',
+            '/api/products',
+            '/api/verify/email',
+            '/api/auth/google',
+        ];
+
         return str_starts_with((string) $request->getPathInfo(), '/api')
-            && !in_array($request->getPathInfo(), ['/api/login', '/api/register', '/api/hello', '/api/products', '/api/verify/email'], true);
+            && !in_array($request->getPathInfo(), $publicApiPaths, true);
     }
 
     public function authenticate(Request $request): SelfValidatingPassport

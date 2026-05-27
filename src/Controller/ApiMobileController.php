@@ -80,12 +80,26 @@ class ApiMobileController extends AbstractController
         $customerName = trim((string) ($payload['customerName'] ?? ($user && method_exists($user, 'getName') ? $user->getName() : 'Guest')));
         $contact = trim((string) ($payload['contact'] ?? 'N/A'));
         $notes = trim((string) ($payload['notes'] ?? ''));
+        $paymentMethod = strtolower(trim((string) (
+            $payload['payment_method']
+            ?? $payload['paymentMethod']
+            ?? $payload['payment_provider']
+            ?? 'cash'
+        )));
+        $allowedPaymentMethods = ['cash', 'gcash', 'card'];
+        if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
+            $paymentMethod = 'cash';
+        }
 
         $order = new Order();
         $order->setCustomerName($customerName ?: 'Guest');
         $order->setContact($contact ?: 'N/A');
         $order->setNotes($notes !== '' ? $notes : null);
         $order->setCreatedBy($user);
+        $order->setPaymentProvider($paymentMethod);
+        $order->setPaymentSessionId(null);
+        $order->setPaymentStatus(Order::PAYMENT_STATUS_PAID);
+        $order->setPaidAt(new \DateTimeImmutable());
 
         $total = 0.0;
 
@@ -126,6 +140,33 @@ class ApiMobileController extends AbstractController
         ], 201);
     }
 
+    #[Route('/orders/{id}', name: 'api_orders_show', methods: ['GET'])]
+    #[IsGranted('ROLE_CUSTOMER')]
+    public function showOrder(int $id, OrderRepository $orders): JsonResponse
+    {
+        $order = $orders->find($id);
+        if (!$order) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        $user = $this->getUser();
+        if (!$user || $order->getCreatedBy()?->getId() !== $user->getId()) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'You are not allowed to view this order.',
+            ], 403);
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'message' => 'Order retrieved.',
+            'order' => $this->serializeOrder($order),
+        ]);
+    }
+
     #[Route('/staff/orders', name: 'api_staff_orders_list', methods: ['GET'])]
     #[IsGranted('ROLE_STAFF')]
     public function listOrdersForStaff(OrderRepository $orders): JsonResponse
@@ -162,6 +203,11 @@ class ApiMobileController extends AbstractController
             'contact' => $order->getContact(),
             'notes' => $order->getNotes(),
             'totalPrice' => (float) $order->getTotalPrice(),
+            'total' => (float) $order->getTotalPrice(),
+            'paymentStatus' => $order->getPaymentStatus(),
+            'paymentProvider' => $order->getPaymentProvider(),
+            'paidAt' => $order->getPaidAt()?->format(DATE_ATOM),
+            'status' => $order->getPaymentStatus(),
             'createdAt' => $order->getCreatedAt()?->format(DATE_ATOM),
             'items' => array_map(fn (OrderItem $item) => [
                 'id' => $item->getId(),

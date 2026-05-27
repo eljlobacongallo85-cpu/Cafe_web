@@ -114,8 +114,7 @@ class ApiAuthController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserRepository $users,
-        UserPasswordHasherInterface $hasher,
-        \App\Service\EmailVerificationService $verification
+        UserPasswordHasherInterface $hasher
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -171,32 +170,25 @@ class ApiAuthController extends AbstractController
         $user->setRoles(['ROLE_CUSTOMER']);
         $user->setPassword($hasher->hashPassword($user, $password));
         if (method_exists($user, 'setVerified')) {
-            $user->setVerified(false);
+            // Mobile registration uses auto-verification for faster onboarding.
+            $user->setVerified(true);
         }
-
-        $connection = $em->getConnection();
-        $connection->beginTransaction();
 
         try {
             $em->persist($user);
             $em->flush();
-
-            $verification->startVerification($user);
-
-            $connection->commit();
         } catch (\Throwable $exception) {
-            $connection->rollBack();
             $em->clear();
 
             return new JsonResponse([
                 'ok' => false,
-                'message' => 'Unable to send the verification email. Please try again later.',
+                'message' => 'Unable to complete registration. Please try again later.',
             ], 500);
         }
 
         return new JsonResponse([
             'ok' => true,
-            'message' => 'Registration successful. Please check your email for the verification link.',
+            'message' => 'Registration successful. Your account is verified.',
             'user' => [
                 'id' => $user->getId(),
                 'username' => $user->getUserIdentifier(),

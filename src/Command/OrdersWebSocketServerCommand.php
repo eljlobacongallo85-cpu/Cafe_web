@@ -101,6 +101,16 @@ class OrdersWebSocketServerCommand extends Command
 
         $io->success(sprintf('Orders WebSocket server listening on ws://%s:%s/ws/orders', $host, $port));
         $io->writeln('Make sure your reverse proxy forwards /ws/orders to this port.');
+
+        // Workerman requires an argv command (start/stop/restart/status).
+        // In Railway we want this process to run in foreground continuously.
+        if (!isset($GLOBALS['argv']) || !is_array($GLOBALS['argv'])) {
+            $GLOBALS['argv'] = [];
+        }
+        $GLOBALS['argv'][0] = $GLOBALS['argv'][0] ?? 'workerman';
+        $GLOBALS['argv'][1] = 'start';
+        $GLOBALS['argc'] = 2;
+
         Worker::runAll();
 
         return Command::SUCCESS;

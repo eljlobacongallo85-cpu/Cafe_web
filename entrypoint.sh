@@ -15,8 +15,17 @@ if [ "${DATABASE_URL:-}" != "" ]; then
 fi
 
 # Start orders WebSocket worker (used by mobile realtime updates)
-echo "[entrypoint] Starting WebSocket server on 127.0.0.1:8081..."
-php bin/console app:websocket:orders --host=127.0.0.1 --port=8081 >/tmp/orders-ws.log 2>&1 &
+# Keep it auto-restarting and send logs to container stdout for Railway visibility.
+echo "[entrypoint] Starting WebSocket supervisor on 127.0.0.1:8081..."
+(
+  while true; do
+    echo "[entrypoint] Launching app:websocket:orders..."
+    php bin/console app:websocket:orders --host=127.0.0.1 --port=8081
+    code=$?
+    echo "[entrypoint] WebSocket worker exited with code ${code}. Restarting in 2s..."
+    sleep 2
+  done
+) &
 
 php-fpm -D
 exec nginx -g 'daemon off;'

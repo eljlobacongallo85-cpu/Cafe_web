@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
+use App\Service\OrderRealtimePublisher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,7 +34,8 @@ class ApiStaffProductController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        OrderRealtimePublisher $realtimePublisher
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -69,11 +71,13 @@ class ApiStaffProductController extends AbstractController
         $em->flush();
 
         $logger->record('ADD_PRODUCT', sprintf('Product #%d created via API', $product->getId()));
+        $serialized = $this->serializeProduct($product);
+        $realtimePublisher->publishProductUpdated($serialized);
 
         return new JsonResponse([
             'ok' => true,
             'message' => 'Product created.',
-            'product' => $this->serializeProduct($product),
+            'product' => $serialized,
         ], 201);
     }
 
@@ -92,7 +96,8 @@ class ApiStaffProductController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        OrderRealtimePublisher $realtimePublisher
     ): JsonResponse {
         $user = $this->getUser();
         if (!$user instanceof \App\Entity\User) {
@@ -141,11 +146,13 @@ class ApiStaffProductController extends AbstractController
 
         $em->flush();
         $logger->record('EDIT_PRODUCT', sprintf('Product #%d updated via API', $product->getId()));
+        $serialized = $this->serializeProduct($product);
+        $realtimePublisher->publishProductUpdated($serialized);
 
         return new JsonResponse([
             'ok' => true,
             'message' => 'Product updated.',
-            'product' => $this->serializeProduct($product),
+            'product' => $serialized,
         ]);
     }
 
@@ -153,7 +160,8 @@ class ApiStaffProductController extends AbstractController
     public function delete(
         Product $product,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        OrderRealtimePublisher $realtimePublisher
     ): JsonResponse {
         $user = $this->getUser();
         if (!$user instanceof \App\Entity\User) {
@@ -181,6 +189,7 @@ class ApiStaffProductController extends AbstractController
         }
 
         $logger->record('DELETE_PRODUCT', sprintf('Product #%d (%s) deleted via API', $id, $name));
+        $realtimePublisher->publishProductDeleted((int) $id, (string) $name);
 
         return new JsonResponse([
             'ok' => true,

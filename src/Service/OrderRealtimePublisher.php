@@ -16,7 +16,7 @@ class OrderRealtimePublisher
             @mkdir($dir, 0775, true);
         }
 
-        $this->eventsFile = $dir . '/orders-events.ndjson';
+        $this->eventsFile = $dir . '/realtime-events.ndjson';
         if (!file_exists($this->eventsFile)) {
             @touch($this->eventsFile);
         }
@@ -24,10 +24,30 @@ class OrderRealtimePublisher
 
     public function publishOrderUpdated(array $orderPayload): void
     {
+        $this->publish('order.updated', ['order' => $orderPayload]);
+    }
+
+    public function publishProductUpdated(array $productPayload): void
+    {
+        $this->publish('product.updated', ['product' => $productPayload]);
+    }
+
+    public function publishProductDeleted(int|string $id, ?string $name = null): void
+    {
+        $this->publish('product.deleted', [
+            'product' => [
+                'id' => $id,
+                'name' => $name,
+            ],
+        ]);
+    }
+
+    private function publish(string $type, array $payload): void
+    {
         $event = [
-            'type' => 'order.updated',
+            'type' => $type,
             'ts' => (new \DateTimeImmutable())->format(DATE_ATOM),
-            'order' => $orderPayload,
+            ...$payload,
         ];
 
         @file_put_contents(

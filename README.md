@@ -60,6 +60,25 @@ Authentication is **Bearer token** based:
 ### Staff endpoints
 - `GET /api/staff/orders` (requires `ROLE_STAFF`)
 
+## Real-time Orders WebSocket (Railway)
+
+The deployed backend now includes WebSocket support for mobile real-time order updates.
+
+- Public path (same domain): `/ws/orders`
+- Example URL: `wss://<railway-domain>/ws/orders`
+- Event type: `order.updated`
+
+### How it works in Railway
+
+1. `entrypoint.sh` starts:
+   - PHP-FPM
+   - Nginx
+   - WebSocket worker (`php bin/console app:websocket:orders --host=127.0.0.1 --port=8081`)
+2. Nginx proxies `/ws/orders` to `127.0.0.1:8081`.
+3. When `POST /api/orders` succeeds, an `order.updated` event is appended to:
+   - `var/realtime/orders-events.ndjson`
+4. The worker broadcasts new events to connected clients.
+
 ## Demo checklist (rubrics)
 - Customer mobile app calls `/api/products`, `/api/register`, `/api/login`, `/api/me`, `/api/orders`
 - Show RBAC: customer cannot access `/api/staff/*` and staff cannot access `/admin/users` unless admin

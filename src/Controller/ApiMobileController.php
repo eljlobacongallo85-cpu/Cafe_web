@@ -7,6 +7,7 @@ use App\Entity\OrderItem;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
+use App\Service\OrderRealtimePublisher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -62,7 +63,8 @@ class ApiMobileController extends AbstractController
         ProductRepository $products,
         OrderRepository $orders,
         EntityManagerInterface $em,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        OrderRealtimePublisher $realtimePublisher
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -140,11 +142,13 @@ class ApiMobileController extends AbstractController
         $em->flush();
 
         $logger->record('CREATE', sprintf('Order #%d created via API', $order->getId()));
+        $serializedOrder = $this->serializeOrder($order);
+        $realtimePublisher->publishOrderUpdated($serializedOrder);
 
         return new JsonResponse([
             'ok' => true,
             'message' => 'Order created successfully.',
-            'order' => $this->serializeOrder($order),
+            'order' => $serializedOrder,
         ], 201);
     }
 

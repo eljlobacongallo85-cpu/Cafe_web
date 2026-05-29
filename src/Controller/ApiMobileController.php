@@ -65,7 +65,8 @@ class ApiMobileController extends AbstractController
         OrderRepository $orders,
         EntityManagerInterface $em,
         ActivityLogger $logger,
-        OrderRealtimePublisher $realtimePublisher
+        OrderRealtimePublisher $realtimePublisher,
+        PushNotificationService $pushNotifications
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -145,6 +146,16 @@ class ApiMobileController extends AbstractController
         $logger->record('CREATE', sprintf('Order #%d created via API', $order->getId()));
         $serializedOrder = $this->serializeOrder($order);
         $realtimePublisher->publishOrderUpdated($serializedOrder);
+        $pushNotifications->notifyUser(
+            $user,
+            'Order placed successfully',
+            sprintf('Your order #%d has been received. Thank you!', $order->getCustomerOrderNo() ?? $order->getId()),
+            [
+                'type' => 'order_created',
+                'orderId' => (string) $order->getId(),
+                'status' => $order->getPaymentStatus(),
+            ]
+        );
 
         return new JsonResponse([
             'ok' => true,

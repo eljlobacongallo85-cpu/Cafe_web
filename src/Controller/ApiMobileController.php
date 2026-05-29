@@ -8,6 +8,7 @@ use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Service\ActivityLogger;
 use App\Service\OrderRealtimePublisher;
+use App\Service\PushNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -192,6 +193,88 @@ class ApiMobileController extends AbstractController
             'ok' => true,
             'message' => 'Orders retrieved.',
             'orders' => $payload,
+        ]);
+    }
+
+    #[Route('/staff/orders/{id}', name: 'api_staff_orders_update', methods: ['PATCH'])]
+    #[IsGranted('ROLE_STAFF')]
+    public function updateOrderForStaff(
+        int $id,
+        Request $request,
+        OrderRepository $orders,
+        EntityManagerInterface $em,
+        ActivityLogger $logger,
+        OrderRealtimePublisher $realtimePublisher,
+        PushNotificationService $pushNotifications
+    ): JsonResponse {
+        $order = $orders->find($id);
+        if (!$order) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            $payload = $request->request->all();
+        }
+
+        $status = strtolower(trim((string) ($payload['status'] ?? $payload['paymentStatus'] ?? '')));
+        $allowedStatuses = [
+            'pending',
+            'preparing',
+            'ready',
+            'completed',
+            'cancelled',
+            'canceled',
+            'paid',
+            'refunded',
+            'failed',
+        ];
+
+        if (!in_array($status, $allowedStatuses, true)) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Invalid order status.',
+            ], 400);
+        }
+
+        if ($status === 'canceled') {
+            $status = 'cancelled';
+        }
+
+        $oldStatus = $order->getPaymentStatus();
+        $order->setPaymentStatus($status);
+        $em->flush();
+
+        $logger->record('UPDATE', sprintf(
+            'Order #%d status changed from %s to %s via API',
+            $order->getId(),
+            $oldStatus,
+            $status
+        ));
+
+        $serializedOrder = $this->serializeOrder($order);
+        $realtimePublisher->publishOrderUpdated($serializedOrder);
+
+        if ($order->getCreatedBy()) {
+            $pushNotifications->notifyUser(
+                $order->getCreatedBy(),
+                'El Jlo order update',
+                sprintf('Your order #%d is %s.', $order->getCustomerOrderNo() ?? $order->getId(), $status),
+                [
+                    'type' => 'order_status',
+                    'orderId' => (string) $order->getId(),
+                    'status' => $status,
+                ]
+            );
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'message' => 'Order updated.',
+            'order' => $serializedOrder,
         ]);
     }
 

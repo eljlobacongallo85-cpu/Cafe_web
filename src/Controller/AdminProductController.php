@@ -6,6 +6,7 @@ use App\Entity\Product;
 use App\Entity\ActivityLog;
 use App\Form\ProductType;
 use App\Repository\ProductRepository;
+use App\Service\OrderRealtimePublisher;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,7 +29,11 @@ class AdminProductController extends AbstractController
 
     // ✅ ADD PRODUCT
     #[Route('/new', name: 'admin_product_new')]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        OrderRealtimePublisher $realtimePublisher
+    ): Response
     {
         $product = new Product();
         $form = $this->createForm(ProductType::class, $product);
@@ -44,6 +49,7 @@ class AdminProductController extends AbstractController
             $product->setCreatedBy($user);
             $em->persist($product);
             $em->flush();
+            $realtimePublisher->publishProductUpdated($this->serializeProduct($product));
 
             // ✅ ACTIVITY LOG
             $log = new ActivityLog();
@@ -67,7 +73,12 @@ class AdminProductController extends AbstractController
 
     // ✅ EDIT PRODUCT
     #[Route('/{id}/edit', name: 'admin_product_edit')]
-    public function edit(Request $request, Product $product, EntityManagerInterface $em): Response
+    public function edit(
+        Request $request,
+        Product $product,
+        EntityManagerInterface $em,
+        OrderRealtimePublisher $realtimePublisher
+    ): Response
     {
         $user = $this->getUser();
 
@@ -88,6 +99,7 @@ class AdminProductController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
+            $realtimePublisher->publishProductUpdated($this->serializeProduct($product));
 
             // ✅ ACTIVITY LOG
             $log = new ActivityLog();
@@ -112,7 +124,11 @@ class AdminProductController extends AbstractController
 
     // ✅ DELETE PRODUCT
     #[Route('/{id}/delete', name: 'admin_product_delete')]
-    public function delete(Product $product, EntityManagerInterface $em): Response
+    public function delete(
+        Product $product,
+        EntityManagerInterface $em,
+        OrderRealtimePublisher $realtimePublisher
+    ): Response
     {
         $user = $this->getUser();
 
@@ -128,9 +144,11 @@ class AdminProductController extends AbstractController
 
         try {
             $productName = $product->getName();
+            $productId = $product->getId();
 
             $em->remove($product);
             $em->flush();
+            $realtimePublisher->publishProductDeleted((int) $productId, (string) $productName);
 
             // ✅ ACTIVITY LOG
             $log = new ActivityLog();
@@ -160,5 +178,23 @@ class AdminProductController extends AbstractController
         return $this->render('admin/product/show.html.twig', [
             'product' => $product,
         ]);
+    }
+
+    private function serializeProduct(Product $product): array
+    {
+        $createdBy = $product->getCreatedBy();
+
+        return [
+            'id' => $product->getId(),
+            'name' => $product->getName(),
+            'description' => $product->getDescription(),
+            'price' => (float) $product->getPrice(),
+            'image' => $product->getImage(),
+            'category' => $product->getCategory(),
+            'createdBy' => $createdBy ? [
+                'id' => $createdBy->getId(),
+                'username' => $createdBy->getUserIdentifier(),
+            ] : null,
+        ];
     }
 }

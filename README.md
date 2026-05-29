@@ -26,6 +26,8 @@ This repo can be deployed to Railway using the included `Dockerfile`.
    - `APP_SECRET=<generate-a-random-secret>`
    - `COMPOSER_ALLOW_SUPERUSER=1`
    - `DATABASE_URL=${{MySQL.MYSQL_URL}}`
+   - `FCM_SERVICE_ACCOUNT_JSON=<firebase-service-account-json-or-base64>`
+   - `FCM_PROJECT_ID=<firebase-project-id>`
 5) Deploy, then generate a domain for the web/app service.
 
 ## Mobile/Customer API
@@ -46,6 +48,8 @@ Authentication is **Bearer token** based:
 - `PATCH /api/me`
   - Body: `{ "name": "New Name" }`
 - `POST /api/logout`
+- `POST /api/push-tokens`
+  - Body: `{ "token": "FCM_DEVICE_TOKEN", "platform": "android" }`
 - `GET /api/orders` (customer's own orders)
 - `POST /api/orders` (create order)
   - Body:
@@ -59,6 +63,25 @@ Authentication is **Bearer token** based:
 
 ### Staff endpoints
 - `GET /api/staff/orders` (requires `ROLE_STAFF`)
+- `PATCH /api/staff/orders/{id}` (requires `ROLE_STAFF`)
+  - Body: `{ "status": "preparing" }`
+  - Allowed statuses: `pending`, `preparing`, `ready`, `completed`, `cancelled`, `paid`, `refunded`, `failed`
+  - Sends a Firebase push notification to the customer who placed the order.
+
+## Push Notifications
+
+The mobile app stores each device token through `POST /api/push-tokens`. When staff
+updates an order through `PATCH /api/staff/orders/{id}`, the backend sends a
+Firebase Cloud Messaging notification to the order owner.
+
+To enable sending in Railway:
+
+1. Firebase Console -> Project settings -> Service accounts.
+2. Generate a new private key.
+3. Add the JSON to Railway as `FCM_SERVICE_ACCOUNT_JSON`. If Railway has trouble
+   with multiline JSON, base64-encode the JSON and use that value instead.
+4. Add `FCM_PROJECT_ID`, for example `app-dev-88302`.
+5. Push to GitHub so Railway redeploys, then run migrations.
 
 ## Real-time Orders WebSocket (Railway)
 

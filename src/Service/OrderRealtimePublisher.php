@@ -15,11 +15,13 @@ class OrderRealtimePublisher
         if (!is_dir($dir)) {
             @mkdir($dir, 0775, true);
         }
+        @chmod($dir, 0775);
 
         $this->eventsFile = $dir . '/realtime-events.ndjson';
         if (!file_exists($this->eventsFile)) {
             @touch($this->eventsFile);
         }
+        @chmod($this->eventsFile, 0664);
     }
 
     public function publishOrderUpdated(array $orderPayload): void
@@ -42,6 +44,11 @@ class OrderRealtimePublisher
         ]);
     }
 
+    public function publishActivityLogged(array $logPayload): void
+    {
+        $this->publish('activity.logged', ['activity' => $logPayload]);
+    }
+
     private function publish(string $type, array $payload): void
     {
         $event = [
@@ -50,9 +57,14 @@ class OrderRealtimePublisher
             ...$payload,
         ];
 
+        $encoded = json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded === false) {
+            return;
+        }
+
         @file_put_contents(
             $this->eventsFile,
-            json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL,
+            $encoded . PHP_EOL,
             FILE_APPEND | LOCK_EX
         );
     }

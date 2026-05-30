@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Entity\User;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
 use App\Service\ActivityLogger;
 
@@ -13,12 +14,14 @@ class LogoutLogger
     {
         $user = $event->getToken()?->getUser();
 
-        if ($user) {
-            $this->logger->log(
-                $user,
-                'Logout',
-                $user->getUserIdentifier() . ' logged out'
-            );
+        if (!$user instanceof User) {
+            return;
         }
+
+        $this->logger->log(
+            $user,
+            'LOGOUT',
+            $user->getUserIdentifier() . ' logged out'
+        );
     }
 }

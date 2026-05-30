@@ -6,6 +6,15 @@
 
 {% block body %}
 <div class="card card-compact p-4 shadow-sm">
+    <div class="alert alert-info d-flex align-items-center justify-content-between gap-3">
+        <div>
+            <i class="bi bi-broadcast me-1"></i>
+            Activity updates enabled (<span id="activityRealtimeStatus">connecting</span>; polling fallback every <strong>8s</strong>).
+        </div>
+        <button id="activityRefreshBtn" type="button" class="btn btn-sm btn-outline-primary">
+            Refresh now
+        </button>
+    </div>
 
     <!-- FILTERS -->
 <form method="get" class="row g-2 mb-4">
@@ -48,7 +57,11 @@
 
 
     <!-- LOG TABLE -->
-    <table id="activityTable" class="table table-striped table-hover align-middle">
+    <table
+        id="activityTable"
+        class="table table-striped table-hover align-middle"
+        data-feed-url="{{ path('admin_activity_feed') }}"
+    >
         <thead class="table-dark">
             <tr>
                 <th>User</th>
@@ -90,12 +103,109 @@
 
 {% block javascripts %}
 <script>
-    new DataTable('#activityTable', {
+    const tableEl = document.getElementById('activityTable');
+    const feedUrl = tableEl?.getAttribute('data-feed-url');
+    const realtimeStatus = document.getElementById('activityRealtimeStatus');
+    const dt = new DataTable('#activityTable', {
         searching: false,    // Disable DataTables search
         ordering: false,     // Disable DataTables column sorting
         lengthChange: false, // Keep pagination simple
         pageLength: 25
     });
+
+    const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const badgeForAction = (action) => {
+        const value = escapeHtml(action);
+        if (action === 'DELETE') return `<span class="badge bg-danger">${value}</span>`;
+        if (action === 'UPDATE') return `<span class="badge bg-warning text-dark">${value}</span>`;
+        if (action === 'CREATE') return `<span class="badge bg-success">${value}</span>`;
+        return `<span class="badge bg-info">${value}</span>`;
+    };
+
+    const fmtDate = (iso) => {
+        try {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            const pad = (v) => String(v).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        } catch (e) {
+            return '-';
+        }
+    };
+
+    const setRealtimeStatus = (text, className = '') => {
+        if (!realtimeStatus) return;
+        realtimeStatus.textContent = text;
+        realtimeStatus.className = className;
+    };
+
+    async function refreshActivity() {
+        if (!feedUrl) return;
+        try {
+            const res = await fetch(feedUrl, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (!data || data.ok !== true || !Array.isArray(data.logs)) return;
+
+            const rows = data.logs.map((log) => ([
+                `<strong>${escapeHtml(log.username)}</strong>`,
+                `<span class="badge bg-secondary">${escapeHtml(log.role)}</span>`,
+                badgeForAction(log.action),
+                escapeHtml(log.targetData),
+                fmtDate(log.createdAt),
+            ]));
+
+            dt.clear();
+            dt.rows.add(rows).draw(false);
+        } catch (e) {
+            // keep existing rows
+        }
+    }
+
+    document.getElementById('activityRefreshBtn')?.addEventListener('click', refreshActivity);
+    setInterval(refreshActivity, 8000);
+
+    const connectRealtime = () => {
+        if (!window.WebSocket) {
+            setRealtimeStatus('polling only', 'text-warning fw-semibold');
+            return;
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${protocol}//${window.location.host}/ws/orders`);
+
+        socket.addEventListener('open', () => {
+            setRealtimeStatus('real-time connected', 'text-success fw-semibold');
+        });
+
+        socket.addEventListener('message', (event) => {
+            try {
+                const payload = JSON.parse(event.data);
+                const type = String(payload?.type || '').toLowerCase();
+                if (type.includes('activity') || payload?.activity) {
+                    refreshActivity();
+                }
+            } catch (e) {
+                // ignore malformed messages
+            }
+        });
+
+        socket.addEventListener('close', () => {
+            setRealtimeStatus('reconnecting', 'text-warning fw-semibold');
+            window.setTimeout(connectRealtime, 3000);
+        });
+
+        socket.addEventListener('error', () => {
+            setRealtimeStatus('polling fallback', 'text-warning fw-semibold');
+        });
+    };
+
+    connectRealtime();
 </script>
 
 {% endblock %}

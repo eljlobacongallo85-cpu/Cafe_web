@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,7 +20,8 @@ class ApiAuthController extends AbstractController
         Request $request,
         UserRepository $users,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $hasher
+        UserPasswordHasherInterface $hasher,
+        ActivityLogger $activityLogger
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -74,6 +76,7 @@ class ApiAuthController extends AbstractController
         $user->setApiTokenCreatedAt(new \DateTimeImmutable());
         $em->persist($user);
         $em->flush();
+        $activityLogger->log($user, 'LOGIN', 'Customer logged in via mobile app');
 
         return new JsonResponse([
             'ok' => true,
@@ -91,10 +94,13 @@ class ApiAuthController extends AbstractController
 
     #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function logout(EntityManagerInterface $em): JsonResponse
+    public function logout(EntityManagerInterface $em, ActivityLogger $activityLogger): JsonResponse
     {
         $user = $this->getUser();
         if ($user && method_exists($user, 'setApiTokenHash')) {
+            if ($user instanceof User) {
+                $activityLogger->log($user, 'LOGOUT', 'Customer logged out via mobile app');
+            }
             $user->setApiTokenHash(null);
             if (method_exists($user, 'setApiTokenCreatedAt')) {
                 $user->setApiTokenCreatedAt(null);

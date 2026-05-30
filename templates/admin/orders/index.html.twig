@@ -6,7 +6,7 @@
 <div class="alert alert-info d-flex align-items-center justify-content-between gap-3">
     <div>
         <i class="bi bi-broadcast me-1"></i>
-        Live updates enabled (auto-refresh every <strong>8s</strong>).
+        Live updates enabled (<span id="ordersRealtimeStatus">connecting</span>; polling fallback every <strong>8s</strong>).
     </div>
     <button id="ordersRefreshBtn" type="button" class="btn btn-sm btn-outline-primary">
         Refresh now
@@ -77,6 +77,7 @@
     const showUrlTemplate = tableEl.getAttribute('data-show-url-template') || '';
     const deleteUrlTemplate = tableEl.getAttribute('data-delete-url-template') || '';
     const isAdmin = !!deleteUrlTemplate;
+    const realtimeStatus = document.getElementById('ordersRealtimeStatus');
 
     const dt = $('#orderTable').DataTable({
       pageLength: 10,
@@ -150,6 +151,49 @@
 
     refreshOrders({ silent: false });
     setInterval(() => refreshOrders({ silent: true }), 8000);
+
+    const setRealtimeStatus = (text, className = '') => {
+      if (!realtimeStatus) return;
+      realtimeStatus.textContent = text;
+      realtimeStatus.className = className;
+    };
+
+    const connectRealtime = () => {
+      if (!window.WebSocket) {
+        setRealtimeStatus('polling only', 'text-warning fw-semibold');
+        return;
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socket = new WebSocket(`${protocol}//${window.location.host}/ws/orders`);
+
+      socket.addEventListener('open', () => {
+        setRealtimeStatus('real-time connected', 'text-success fw-semibold');
+      });
+
+      socket.addEventListener('message', (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          const type = String(payload?.type || '').toLowerCase();
+          if (type.includes('order') || payload?.order || Array.isArray(payload?.orders)) {
+            refreshOrders({ silent: false });
+          }
+        } catch (e) {
+          // ignore malformed messages
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        setRealtimeStatus('reconnecting', 'text-warning fw-semibold');
+        window.setTimeout(connectRealtime, 3000);
+      });
+
+      socket.addEventListener('error', () => {
+        setRealtimeStatus('polling fallback', 'text-warning fw-semibold');
+      });
+    };
+
+    connectRealtime();
   });
 </script>
 {% endblock %}

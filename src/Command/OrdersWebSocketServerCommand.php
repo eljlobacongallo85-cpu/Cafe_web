@@ -52,6 +52,10 @@ class OrdersWebSocketServerCommand extends Command
 
         $worker->onConnect = static function (TcpConnection $connection) use (&$clients): void {
             $clients[$connection->id] = $connection;
+            $connection->send(json_encode([
+                'type' => 'connection.ready',
+                'ts' => (new \DateTimeImmutable())->format(DATE_ATOM),
+            ]));
         };
 
         $worker->onClose = static function (TcpConnection $connection) use (&$clients): void {
@@ -66,14 +70,22 @@ class OrdersWebSocketServerCommand extends Command
         };
 
         $worker->onWorkerStart = static function () use (&$clients, $eventsFile, &$offset): void {
-            Timer::add(1.0, static function () use (&$clients, $eventsFile, &$offset): void {
+            Timer::add(0.5, static function () use (&$clients, $eventsFile, &$offset): void {
                 if (!file_exists($eventsFile)) {
                     return;
                 }
 
                 clearstatcache(true, $eventsFile);
                 $size = filesize($eventsFile);
-                if ($size === false || $size <= $offset) {
+                if ($size === false) {
+                    return;
+                }
+
+                if ($size < $offset) {
+                    $offset = 0;
+                }
+
+                if ($size <= $offset) {
                     return;
                 }
 

@@ -20,8 +20,8 @@ echo "[entrypoint] Starting WebSocket supervisor on 127.0.0.1:8081..."
 (
   while true; do
     echo "[entrypoint] Launching app:websocket:orders..."
-    php bin/console app:websocket:orders --host=127.0.0.1 --port=8081
-    code=$?
+    code=0
+    su -s /bin/sh www-data -c "php bin/console app:websocket:orders --host=127.0.0.1 --port=8081" || code=$?
     echo "[entrypoint] WebSocket worker exited with code ${code}. Restarting in 2s..."
     sleep 2
   done
@@ -29,4 +29,3 @@ echo "[entrypoint] Starting WebSocket supervisor on 127.0.0.1:8081..."
 
 php-fpm -D
 exec nginx -g 'daemon off;'
-

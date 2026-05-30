@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\ActivityLog;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -51,6 +52,31 @@ class ActivityLogController extends AbstractController
                 'action' => $action,
                 'date' => $date,
             ]
+        ]);
+    }
+
+    #[Route('/admin/activity/feed', name: 'admin_activity_feed', methods: ['GET'])]
+    public function feed(EntityManagerInterface $em): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $logs = $em->getRepository(ActivityLog::class)
+            ->createQueryBuilder('l')
+            ->orderBy('l.createdAt', 'DESC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
+
+        return new JsonResponse([
+            'ok' => true,
+            'logs' => array_map(static fn (ActivityLog $log): array => [
+                'id' => $log->getId(),
+                'username' => $log->getUsername(),
+                'role' => $log->getRole(),
+                'action' => $log->getAction(),
+                'targetData' => $log->getTargetData(),
+                'createdAt' => $log->getCreatedAt()?->format(DATE_ATOM),
+            ], $logs),
         ]);
     }
 }

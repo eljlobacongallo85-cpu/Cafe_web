@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,7 +21,8 @@ class ApiGoogleAuthController extends AbstractController
         Request $request,
         HttpClientInterface $httpClient,
         UserRepository $users,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ActivityLogger $activityLogger
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
@@ -109,6 +111,7 @@ class ApiGoogleAuthController extends AbstractController
         $user->setApiTokenHash(hash('sha256', $plainToken));
         $user->setApiTokenCreatedAt(new \DateTimeImmutable());
         $em->flush();
+        $activityLogger->log($user, 'LOGIN', 'Customer logged in with Google via mobile app');
 
         return new JsonResponse([
             'ok' => true,
@@ -139,4 +142,3 @@ class ApiGoogleAuthController extends AbstractController
         ]);
     }
 }
-

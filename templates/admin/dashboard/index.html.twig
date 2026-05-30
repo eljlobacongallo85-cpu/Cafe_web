@@ -1,6 +1,6 @@
 {# templates/admin/dashboard/index.html.twig #}
 {% extends 'base_admin.html.twig' %}
-{% block title %}Dashboard - Jelo's Café{% endblock %}
+{% block title %}Dashboard - Jelo's Cafe{% endblock %}
 {% block header %}Dashboard Overview{% endblock %}
 
 {% block body %}
@@ -10,9 +10,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <small class="text-muted">Total Sales</small>
-                    <div class="h4 mb-0 text-success">₱{{ totalSales|number_format(2, '.', ',') }}</div>
+                    <div id="dashboardTotalSales" class="h4 mb-0 text-success">&#8369;{{ totalSales|number_format(2, '.', ',') }}</div>
                 </div>
-                <div class="text-muted" style="font-size:1.6rem">💵</div>
+                <div class="text-muted" style="font-size:1.6rem">$</div>
             </div>
         </div>
     </div>
@@ -22,9 +22,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <small class="text-muted">Total Orders</small>
-                    <div class="h4 mb-0 text-primary">{{ totalOrders }}</div>
+                    <div id="dashboardTotalOrders" class="h4 mb-0 text-primary">{{ totalOrders }}</div>
                 </div>
-                <div style="font-size:1.6rem">📦</div>
+                <div style="font-size:1.6rem">#</div>
             </div>
         </div>
     </div>
@@ -34,9 +34,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <small class="text-muted">Total Products</small>
-                    <div class="h4 mb-0 text-warning">{{ totalProducts }}</div>
+                    <div id="dashboardTotalProducts" class="h4 mb-0 text-warning">{{ totalProducts }}</div>
                 </div>
-                <div style="font-size:1.6rem">☕</div>
+                <div style="font-size:1.6rem">+</div>
             </div>
         </div>
     </div>
@@ -46,9 +46,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <small class="text-muted">Donation (10%)</small>
-                    <div class="h4 mb-0 text-danger">₱{{ totalDonation|number_format(2, '.', ',') }}</div>
+                    <div id="dashboardTotalDonation" class="h4 mb-0 text-danger">&#8369;{{ totalDonation|number_format(2, '.', ',') }}</div>
                 </div>
-                <div style="font-size:1.6rem">❤️</div>
+                <div style="font-size:1.6rem">%</div>
             </div>
         </div>
     </div>
@@ -57,8 +57,17 @@
 <div class="row g-3">
     <div class="col-md-8">
         <div class="card shadow-sm p-3">
-            <h5 class="mb-3">Recent Orders</h5>
-            {% include 'admin/orders/_recent_table.html.twig' with { orders: orders|slice(0,8) } %}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0">Recent Orders</h5>
+                <small class="text-muted">Live: <span id="dashboardRealtimeStatus">connecting</span></small>
+            </div>
+            <div
+                id="dashboardFeed"
+                data-feed-url="{{ path('admin_dashboard_feed') }}"
+                data-order-url-template="{{ path('admin_order_show', { id: 'ORDER_ID' }) }}"
+            >
+                {% include 'admin/orders/_recent_table.html.twig' with { orders: orders|slice(0,8) } %}
+            </div>
         </div>
     </div>
 
@@ -66,7 +75,7 @@
         <div class="card shadow-sm p-3">
             <h5 class="mb-3">Quick Actions</h5>
             <div class="d-grid gap-2">
-                <a href="{{ path('admin_product_new') }}" class="btn btn-coffee">➕ Add Product</a>
+                <a href="{{ path('admin_product_new') }}" class="btn btn-coffee">Add Product</a>
                 <a href="{{ path('admin_product_index') }}" class="btn btn-outline-secondary">Manage Products</a>
                 <a href="{{ path('admin_order_index') }}" class="btn btn-outline-secondary">Manage Orders</a>
                 {% if is_granted('ROLE_ADMIN') %}
@@ -92,4 +101,118 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+  (function () {
+    const feedEl = document.getElementById('dashboardFeed');
+    if (!feedEl) return;
+
+    const feedUrl = feedEl.getAttribute('data-feed-url');
+    const showUrlTemplate = feedEl.getAttribute('data-order-url-template') || '';
+    const tbody = feedEl.querySelector('tbody');
+    const statusEl = document.getElementById('dashboardRealtimeStatus');
+    const totalSalesEl = document.getElementById('dashboardTotalSales');
+    const totalOrdersEl = document.getElementById('dashboardTotalOrders');
+    const totalProductsEl = document.getElementById('dashboardTotalProducts');
+    const totalDonationEl = document.getElementById('dashboardTotalDonation');
+
+    const fmtMoney = (value) => `&#8369;${Number(value || 0).toFixed(2)}`;
+    const fmtDate = (iso) => {
+      try {
+        return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' }) : '-';
+      } catch (e) {
+        return '-';
+      }
+    };
+    const escapeHtml = (value) => String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+    const setStatus = (text, className = '') => {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className = className;
+    };
+
+    let isRefreshing = false;
+
+    async function refreshDashboard() {
+      if (!feedUrl || !tbody || isRefreshing) return;
+      isRefreshing = true;
+      try {
+        const res = await fetch(feedUrl, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data || data.ok !== true) return;
+
+        const stats = data.stats || {};
+        if (totalSalesEl) totalSalesEl.innerHTML = fmtMoney(stats.totalSales);
+        if (totalOrdersEl) totalOrdersEl.textContent = String(stats.totalOrders ?? 0);
+        if (totalProductsEl) totalProductsEl.textContent = String(stats.totalProducts ?? 0);
+        if (totalDonationEl) totalDonationEl.innerHTML = fmtMoney(stats.totalDonation);
+
+        const orders = Array.isArray(data.orders) ? data.orders : [];
+        tbody.innerHTML = orders.length
+          ? orders.map((order) => {
+              const id = order.id ?? '';
+              const showUrl = showUrlTemplate.replace('ORDER_ID', encodeURIComponent(String(id)));
+              return `
+                <tr>
+                  <td>${escapeHtml(id)}</td>
+                  <td>${escapeHtml(order.customerName)}</td>
+                  <td>${fmtMoney(order.totalPrice)}</td>
+                  <td>${fmtDate(order.createdAt)}</td>
+                  <td class="text-end">
+                    <a href="${showUrl}" class="btn btn-sm btn-info text-white">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              `;
+            }).join('')
+          : '<tr><td colspan="5" class="text-center text-muted">No recent orders.</td></tr>';
+      } catch (e) {
+        setStatus('polling fallback', 'text-warning fw-semibold');
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    refreshDashboard();
+    setInterval(refreshDashboard, 8000);
+
+    function connectRealtime() {
+      if (!window.WebSocket) {
+        setStatus('polling only', 'text-warning fw-semibold');
+        return;
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socket = new WebSocket(`${protocol}//${window.location.host}/ws/orders`);
+
+      socket.addEventListener('open', () => setStatus('connected', 'text-success fw-semibold'));
+      socket.addEventListener('message', (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          const type = String(payload?.type || '').toLowerCase();
+          if (type.includes('order') || payload?.order || type.includes('product') || payload?.product) {
+            refreshDashboard();
+          }
+        } catch (e) {
+          // ignore malformed messages
+        }
+      });
+      socket.addEventListener('close', () => {
+        setStatus('reconnecting', 'text-warning fw-semibold');
+        window.setTimeout(connectRealtime, 3000);
+      });
+      socket.addEventListener('error', () => setStatus('polling fallback', 'text-warning fw-semibold'));
+    }
+
+    connectRealtime();
+  })();
+</script>
 {% endblock %}
